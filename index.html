@@ -9,10 +9,18 @@
   <link rel="stylesheet" href="ui/styles.css">
 </head>
 <body>
-
-  <!-- UI Shell -->
   <h1>Puzzle</h1>
   <p id="subtitle">arrastra · intercambia · fusiona</p>
+
+  <div class="toolbar">
+    <select id="level-select"></select>
+    <select id="mode-select">
+      <option value="classic">classic</option>
+      <option value="timed">timed</option>
+      <option value="zen">zen</option>
+    </select>
+    <button id="mute-btn">sonido: on</button>
+  </div>
 
   <div id="board-wrap">
     <canvas id="grid-overlay"></canvas>
@@ -28,7 +36,6 @@
     <button id="replay-btn">Jugar de nuevo</button>
   </div>
 
-  <!-- Modules -->
   <script type="module" src="main.js"></script>
 </body>
 </html>

@@ -1,36 +1,44 @@
-# Validación post-auditoría PWA
+# Guía de testing de sanidad (arquitectura escalable)
 
-## 1. No hay leaks de listeners
+## 1) Replay múltiple sin leaks
+1. Abrir app y jugar 3-5 movimientos.
+2. Pulsar **Jugar de nuevo** 8-10 veces.
+3. En DevTools Memory, comparar heap snapshots (inicio vs final).
+4. Esperado: sin crecimiento sostenido de listeners ni nodos `.cell`.
 
-- Abre la app, juega, pulsa **Jugar de nuevo** varias veces.
-- En DevTools → Performance/Memory, toma un heap snapshot antes y después de 3–4 replays.
-- Comprueba que el número de nodos DOM y de listeners no crece de forma desproporcionada (teardown + `destroy()` evitan duplicados).
+## 2) Offline con assets + niveles
+1. Cargar app online una vez.
+2. Verificar en Application > Service Workers que `service-worker.js` está activo.
+3. En Application > Cache Storage validar `static-*` y `data-*`.
+4. Forzar modo Offline y recargar.
+5. Esperado: abre juego desde cache; si falla navegación, muestra `offline.html`.
 
-## 2. App funciona offline
+## 3) Persistencia de progreso
+1. Completar parcialmente un nivel.
+2. Recargar la página.
+3. Esperado: sesión recuperada (board, score, modo).
+4. Revisar Application > IndexedDB > `puzzle-platform-db` (stores `progress`, `history`, `settings`).
 
-- Carga la app una vez con red.
-- En DevTools → Application → Service Workers, verifica que el SW está activo.
-- En Network, marca **Offline** y recarga o navega a la URL de la app.
-- Debe cargar el puzzle desde cache; si falla la navegación, debe mostrarse `offline.html`.
+## 4) Timer y medallas base (modo timed)
+1. Seleccionar `timed`.
+2. Confirmar avance de tiempo en status.
+3. Esperado: al superar límite se dispara `SESSION_END` con `reason=timeout` y guarda historial.
 
-## 3. Iconos en Android/iOS
+## 5) Multi-niveles
+1. Cambiar nivel con selector.
+2. Verificar que cambia tamaño de tablero y piezas.
+3. Repetir entre niveles para confirmar reinicialización limpia.
 
-- **Android (Chrome)**: Menú → “Añadir a la pantalla de inicio”; el icono debe verse (PNG si existen en `/icons/`, si no SVG).
-- **iOS (Safari)**: Compartir → “Añadir a la pantalla de inicio”; comprobar que el icono y el splash se ven bien. Para mejor resultado, añade `icon-192.png` e `icon-512.png` en `/icons/`.
+## 6) Deploy en subpath
+1. Servir app en ruta no raíz (ej: `/games/puzzle/`).
+2. Verificar `start_url: "."`, `scope: "."` y registro SW relativo.
+3. Esperado: carga correcta y offline sin rutas rotas.
 
-## 4. SW se actualiza y notifica
+## 7) Actualización SW
+1. Incrementar `CACHE_VERSION` de `service-worker.js`.
+2. Publicar y abrir app existente.
+3. Esperado: nueva versión instala, caches viejos se invalidan en `activate`.
 
-- Despliega una versión con `CACHE_VERSION` incrementado en `sw.js`.
-- Con la app abierta, cuando el nuevo SW esté en “waiting”, debe aparecer el toast “Nueva versión disponible. Recargar”.
-- Al pulsar **Recargar**, la página debe recargar y usar la nueva versión (sin `skipWaiting` automático hasta que el usuario pulse).
-
-## 5. Touch y replay
-
-- En móvil o con emulación táctil: arrastrar piezas debe funcionar sin que el body capture el gesto (solo `#board-wrap` tiene `touch-action: none`).
-- Pulsar “Jugar de nuevo” no debe duplicar listeners ni dejar el tab colgado.
-
-## 6. Audio tras instalar
-
-- Instala la PWA (Añadir a pantalla de inicio).
-- Abre la app desde el icono; en el primer toque o clic debe hacerse el warmup del AudioContext.
-- Los sonidos (movimiento, fusión, victoria) deben reproducirse después de ese primer gesto.
+## 8) Fallback offline
+1. Bloquear red y navegar a ruta no cacheada.
+2. Esperado: fallback a `offline.html` o `index.html` cacheado.

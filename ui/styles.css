@@ -77,6 +77,16 @@ h1 {
   text-align: center;
 }
 
+
+.toolbar { display:flex; gap:8px; align-items:center; }
+.toolbar select, .toolbar button {
+  background: transparent;
+  border: 1px solid var(--gold-dim);
+  color: var(--text-dim);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  padding: 6px 10px;
+}
 /* ── Board (touch-action solo aquí para no bloquear scroll/gestos del resto) ── */
 #board-wrap {
   position: relative;
