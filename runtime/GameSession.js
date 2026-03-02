@@ -1,6 +1,6 @@
 import { PuzzleEngine } from '../engine/PuzzleEngine.js';
 import { EVENTS } from './events.js';
-import { addHistory, getProgress, setProgress } from '../storage/persistence.js';
+import { ProgressRepository, SessionRepository } from '../storage/persistence.js';
 
 const MODE_DEFAULTS = {
   classic: { timeLimitMs: null },
@@ -9,10 +9,13 @@ const MODE_DEFAULTS = {
 };
 
 export class GameSession {
-  constructor({ level, mode = 'classic', bus }) {
+  constructor({ level, mode = 'classic', bus, userId = 'default' }) {
     this.level = level;
     this.mode = mode;
     this.bus = bus;
+    this.userId = userId;
+    this.progressRepo = new ProgressRepository(userId);
+    this.sessionRepo = new SessionRepository(userId);
     this.state = PuzzleEngine.createInitialState({ cols: level.board.cols, rows: level.board.rows });
     this.state = PuzzleEngine.shuffleState(this.state);
     this.startedAt = performance.now();
@@ -86,18 +89,34 @@ export class GameSession {
       moveCount: this.state.moveCount,
       cols: this.state.cols,
       rows: this.state.rows,
+      userId: this.userId,
     };
   }
 
   async saveProgress() {
-    const key = `${this.level.id}:${this.mode}`;
-    await setProgress(key, { snapshot: this.getSnapshot(), serialized: PuzzleEngine.serialize(this.state) });
-    await addHistory(this.level.id, { endedAt: Date.now(), ...this.getSnapshot() });
+    const snapshot = this.getSnapshot();
+    await this.progressRepo.upsertLevelMode(this.level.id, this.mode, {
+      bestScore: snapshot.score,
+      bestTimeMs: snapshot.elapsedMs,
+      bestMoves: snapshot.moveCount,
+      stars: snapshot.fusedEdges === snapshot.totalEdges ? 1 : 0,
+      dirty: true,
+      snapshot,
+      serialized: PuzzleEngine.serialize(this.state),
+    });
+
+    await this.sessionRepo.append({
+      levelId: this.level.id,
+      mode: this.mode,
+      startedAt: Date.now() - Math.floor(this.elapsedMs),
+      endedAt: Date.now(),
+      stats: snapshot,
+      seed: null,
+    });
   }
 
   async restoreProgress() {
-    const key = `${this.level.id}:${this.mode}`;
-    const data = await getProgress(key);
+    const data = await this.progressRepo.getLevelMode(this.level.id, this.mode);
     if (!data?.serialized) return false;
     this.state = PuzzleEngine.deserialize(data.serialized);
     this.score = data.snapshot?.score || 0;

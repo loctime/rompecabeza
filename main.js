@@ -9,10 +9,13 @@ import { AppStore } from './runtime/store.js';
 import { AudioEngine } from './audio/AudioEngine.js';
 import { SfxBank } from './audio/SfxBank.js';
 import { MusicController } from './audio/MusicController.js';
+import { LocalAuthProvider } from './runtime/auth.js';
+import { setActiveUser } from './storage/persistence.js';
 
 const bus = new EventBus();
 const assetManager = new AssetManager();
 const store = new AppStore();
+const auth = new LocalAuthProvider();
 const audioEngine = new AudioEngine();
 const sfx = new SfxBank(audioEngine);
 const music = new MusicController(audioEngine);
@@ -23,6 +26,7 @@ let hud;
 let drag;
 let pieceCanvases = [];
 let unsubscribers = [];
+let currentUser = null;
 
 function teardown() {
   drag?.destroy();
@@ -39,7 +43,7 @@ async function boot({ levelId, mode }) {
   const sliced = assetManager.buildPieces(image, level.board.cols, level.board.rows);
   pieceCanvases = sliced.pieces.map((p) => p.canvas);
 
-  session = new GameSession({ level, mode, bus });
+  session = new GameSession({ level, mode, bus, userId: currentUser?.userId || 'default' });
   await session.restoreProgress();
 
   boardUI = new BoardUI({
@@ -88,9 +92,8 @@ async function boot({ levelId, mode }) {
   unsubscribers.push(bus.on(EVENTS.PUZZLE_SOLVED, () => { sfx.playWin(); hud.showWin(); }));
   unsubscribers.push(bus.on(EVENTS.TIMER_TICK, () => hud.update(session.getSnapshot())));
   unsubscribers.push(bus.on(EVENTS.SESSION_END, async (payload) => {
-    await store.markLevelResult(payload.levelId, {
+    await store.markLevelResult(payload.levelId, payload.mode, {
       bestScore: Math.max(store.state.progress[payload.levelId]?.bestScore || 0, payload.score),
-      lastMode: payload.mode,
       solved: payload.reason === 'win',
     });
   }));
@@ -100,8 +103,55 @@ async function boot({ levelId, mode }) {
   music.startAmbient();
 }
 
-async function init() {
+async function renderUserMenu() {
+  const userSelect = document.getElementById('user-select');
+  const users = await auth.listUsers();
+  userSelect.innerHTML = users.map((u) => `<option value="${u.userId}">${u.displayName}</option>`).join('');
+  userSelect.value = currentUser?.userId || 'default';
+}
+
+async function switchUser(userId) {
+  const user = await auth.login(userId);
+  if (!user) return;
+  currentUser = user;
+  setActiveUser(user.userId);
+  store.setUser(user.userId);
   await store.hydrate();
+  await renderUserMenu();
+  await boot({ levelId: store.state.uiPrefs.levelId, mode: store.state.uiPrefs.mode });
+  document.getElementById('active-user').textContent = `usuario: ${user.displayName}`;
+}
+
+async function initIdentity() {
+  currentUser = await auth.init();
+  setActiveUser(currentUser.userId);
+  store.setUser(currentUser.userId);
+  await renderUserMenu();
+
+  document.getElementById('user-select').addEventListener('change', async (ev) => {
+    await switchUser(ev.target.value);
+  });
+
+  document.getElementById('user-create-btn').addEventListener('click', async () => {
+    const name = prompt('Nombre del nuevo usuario local');
+    if (!name) return;
+    const created = await auth.createUser(name);
+    if (!created) return;
+    await switchUser(created.userId);
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    const user = await auth.logout();
+    await switchUser(user.userId);
+  });
+
+  document.getElementById('active-user').textContent = `usuario: ${currentUser.displayName}`;
+}
+
+async function init() {
+  await initIdentity();
+  await store.hydrate();
+
   const levelSelect = document.getElementById('level-select');
   levelSelect.innerHTML = levels.map((l) => `<option value="${l.id}">${l.meta.title}</option>`).join('');
   levelSelect.value = store.state.uiPrefs.levelId;

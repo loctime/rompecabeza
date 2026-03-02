@@ -1,7 +1,10 @@
-import { getSetting, setSetting, getProgress, setProgress } from '../storage/persistence.js';
+import { ProgressRepository, SettingsRepository } from '../storage/persistence.js';
 
 export class AppStore {
-  constructor() {
+  constructor(userId = 'default') {
+    this.userId = userId;
+    this.settingsRepo = new SettingsRepository(userId);
+    this.progressRepo = new ProgressRepository(userId);
     this.state = {
       settings: { mute: false, theme: 'dark', musicVolume: 0.6, sfxVolume: 0.9 },
       progress: {},
@@ -11,15 +14,20 @@ export class AppStore {
     this.listeners = new Set();
   }
 
+  setUser(userId) {
+    this.userId = userId;
+    this.settingsRepo = new SettingsRepository(userId);
+    this.progressRepo = new ProgressRepository(userId);
+  }
+
   async hydrate() {
     this.state.settings = {
-      mute: await getSetting('mute', false),
-      theme: await getSetting('theme', 'dark'),
-      musicVolume: await getSetting('musicVolume', 0.6),
-      sfxVolume: await getSetting('sfxVolume', 0.9),
+      mute: await this.settingsRepo.get('mute', false),
+      theme: await this.settingsRepo.get('theme', 'dark'),
+      musicVolume: await this.settingsRepo.get('musicVolume', 0.6),
+      sfxVolume: await this.settingsRepo.get('sfxVolume', 0.9),
     };
-    const progress = await getProgress('all-levels');
-    if (progress) this.state.progress = progress;
+    this.state.progress = await this.progressRepo.getSummaryByLevel();
     this.emit();
   }
 
@@ -28,13 +36,18 @@ export class AppStore {
 
   async setSetting(key, value) {
     this.state.settings[key] = value;
-    await setSetting(key, value);
+    await this.settingsRepo.set(key, value);
     this.emit();
   }
 
-  async markLevelResult(levelId, result) {
-    this.state.progress[levelId] = { ...(this.state.progress[levelId] || {}), ...result };
-    await setProgress('all-levels', this.state.progress);
+  async markLevelResult(levelId, mode, result) {
+    const prev = this.state.progress[levelId] || {};
+    this.state.progress[levelId] = { ...prev, ...result, lastMode: mode };
+    await this.progressRepo.upsertLevelMode(levelId, mode, {
+      bestScore: Math.max(prev.bestScore || 0, result.bestScore || 0),
+      stars: result.solved ? 1 : 0,
+      dirty: true,
+    });
     this.emit();
   }
 }
