@@ -20,6 +20,11 @@
       "purpose": "any"
     },
     {
+      "src": "icons/icon.svg",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
       "src": "icons/icon-192.svg",
       "sizes": "192x192",
       "type": "image/svg+xml",

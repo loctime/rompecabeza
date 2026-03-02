@@ -20,6 +20,9 @@ const STATIC_PATHS = [
   'ui/HUD.js',
   'ui/styles.css',
   'manifest.json',
+  'icons/icon-192.png',
+  'icons/icon-512.png',
+  'icons/icon.svg',
   'icons/icon-192.svg',
   'icons/icon-512.svg',
   'offline.html'
@@ -44,13 +47,20 @@ function isStaticAsset(request) {
     path.includes('/fonts/');
 }
 
-// install: precache solo estáticos (no HTML de navegación sin validación)
+// install: precache seguro (un recurso fallido no rompe el install)
 self.addEventListener('install', (event) => {
   const base = getBase();
   const urls = STATIC_PATHS.map((p) => (p === '' ? base : base + p));
   event.waitUntil(
-    caches.open(CACHE_STATIC).then((cache) => cache.addAll(urls))
-      .catch((err) => console.warn('SW precache failed:', err))
+    caches.open(CACHE_STATIC).then((cache) =>
+      Promise.all(
+        urls.map((url) =>
+          cache.add(url).catch((err) => {
+            console.warn('SW precache skip:', url, err);
+          })
+        )
+      )
+    )
   );
   // No skipWaiting: el cliente decidirá cuándo activar
 });
