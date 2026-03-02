@@ -1,0 +1,149 @@
+/**
+ * ui/styles.css
+ * Global styles for the puzzle platform.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400&family=Playfair+Display:wght@400;700&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+:root {
+  --bg:       #0f0e0c;
+  --gold:     #c9a84c;
+  --gold-dim: #7a5f28;
+  --text:     #e8e0d0;
+  --text-dim: #7a7060;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 20px;
+}
+
+h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.6rem;
+  color: var(--gold);
+  letter-spacing: 0.05em;
+  font-weight: 400;
+}
+
+#subtitle {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-top: -18px;
+  text-align: center;
+}
+
+/* ── Board ── */
+#board-wrap {
+  position: relative;
+  flex-shrink: 0;
+  border: 1px solid var(--gold-dim);
+  box-shadow: 0 0 60px rgba(201,168,76,0.08);
+  touch-action: none;
+}
+
+#grid-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+#hover-overlay {
+  display: none;
+  position: absolute;
+  pointer-events: none;
+  z-index: 11;
+}
+
+/* ── Ghost ── */
+#ghost {
+  position: fixed;
+  pointer-events: none;
+  z-index: 999;
+  opacity: 0.88;
+  border: 1.5px solid var(--gold);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.7), 0 0 24px rgba(201,168,76,0.35);
+  display: none;
+}
+
+/* ── HUD ── */
+#status {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  height: 16px;
+  text-align: center;
+}
+
+#shuffle-btn {
+  background: transparent;
+  border: 1px solid var(--gold-dim);
+  color: var(--text-dim);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 8px 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+#shuffle-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ── Win overlay ── */
+#win-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15,14,12,0.93);
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+  z-index: 100;
+}
+#win-overlay.show { display: flex; }
+
+#win-overlay h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.5rem;
+  color: var(--gold);
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from { text-shadow: 0 0 20px rgba(201,168,76,0.5); }
+  to   { text-shadow: 0 0 60px rgba(201,168,76,1), 0 0 100px rgba(201,168,76,0.4); }
+}
+
+#win-overlay button {
+  background: transparent;
+  border: 1px solid var(--gold-dim);
+  color: var(--gold);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 10px 24px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+#win-overlay button:hover { background: var(--gold); color: var(--bg); }

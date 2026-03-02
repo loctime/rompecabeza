@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f0e0c">
+  <title>Puzzle Platform</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="ui/styles.css">
+</head>
+<body>
+
+  <!-- UI Shell -->
+  <h1>Puzzle</h1>
+  <p id="subtitle">arrastra · intercambia · fusiona</p>
+
+  <div id="board-wrap">
+    <canvas id="grid-overlay"></canvas>
+    <div id="hover-overlay"></div>
+  </div>
+
+  <div id="status"></div>
+  <button id="shuffle-btn">mezclar</button>
+  <canvas id="ghost"></canvas>
+
+  <div id="win-overlay">
+    <h2>¡Completado!</h2>
+    <button id="replay-btn">Jugar de nuevo</button>
+  </div>
+
+  <!-- Modules -->
+  <script type="module" src="main.js"></script>
+</body>
+</html>
