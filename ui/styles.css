@@ -1,15 +1,42 @@
 /**
  * ui/styles.css
  * Global styles for the puzzle platform.
+ * Fuentes: locales (woff2) si existen, si no @import remoto.
  */
 
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400&family=Playfair+Display:wght@400;700&display=swap');
-
+@font-face {
+  font-family: 'DM Mono';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('../fonts/dm-mono-300.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'DM Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/dm-mono-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/playfair-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../fonts/playfair-700.woff2') format('woff2');
+}
+/* Fallback: si no hay woff2 locales, el navegador usará monospace/serif */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html, body {
   overscroll-behavior: none;
-  touch-action: none;
 }
 
 :root {
@@ -50,7 +77,7 @@ h1 {
   text-align: center;
 }
 
-/* ── Board ── */
+/* ── Board (touch-action solo aquí para no bloquear scroll/gestos del resto) ── */
 #board-wrap {
   position: relative;
   flex-shrink: 0;

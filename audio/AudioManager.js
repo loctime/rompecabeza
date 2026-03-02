@@ -47,6 +47,19 @@ export class AudioManager {
   unmute() { this._muted = false; }
   toggle() { this._muted = !this._muted; }
 
+  /**
+   * Warmup del AudioContext con user gesture (llamar en primer click/touch).
+   * Necesario en iOS/Chrome por políticas de autoplay.
+   */
+  warmup() {
+    try {
+      const ctx = this._getContext();
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+    } catch (_) {}
+  }
+
   // ── Private: context ────────────────────────────────────────────────────────
 
   _getContext() {
@@ -54,7 +67,7 @@ export class AudioManager {
       this._ctx = new (window.AudioContext || window.webkitAudioContext)();
     }
     if (this._ctx.state === 'suspended') {
-      this._ctx.resume();
+      this._ctx.resume().catch(() => {});
     }
     return this._ctx;
   }

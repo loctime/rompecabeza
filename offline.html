@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f0e0c">
+  <title>Sin conexión — Puzzle Platform</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0f0e0c;
+      color: #e8e0d0;
+      font-family: system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 { font-size: 1.25rem; color: #c9a84c; margin-bottom: 8px; }
+    p { font-size: 0.9rem; color: #7a7060; margin-bottom: 24px; }
+    a { color: #c9a84c; }
+  </style>
+</head>
+<body>
+  <h1>Sin conexión</h1>
+  <p>No hay conexión a internet. Cuando vuelva a haber red, recarga la página.</p>
+  <p><a href="./">Volver al inicio</a></p>
+  <script>
+    if (navigator.onLine) window.location.replace('./');
+  </script>
+</body>
+</html>

@@ -43,12 +43,29 @@ export class BoardUI {
     gridOverlayEl.height = boardH;
 
     this._gctx = gridOverlayEl.getContext('2d');
+    this._cellEls = [];
+    this._destroyed = false;
+  }
+
+  /**
+   * Limpia referencias. Llamar antes de reinicializar (p. ej. replay).
+   */
+  destroy() {
+    if (this._destroyed) return;
+    this._cellEls = [];
+    this.wrapEl = null;
+    this.ghostEl = null;
+    this.hoverEl = null;
+    this.gridOverlayEl = null;
+    this._gctx = null;
+    this._destroyed = true;
   }
 
   // ── Full render ─────────────────────────────────────────────────────────────
 
   /**
    * Full board render. Call after any engine state change.
+   * Reutiliza nodos .cell existentes cuando cols/rows no cambian.
    * @param {import('../engine/PuzzleEngine.js').PuzzleEngine} engine
    */
   render(engine) {
@@ -144,28 +161,36 @@ export class BoardUI {
   // ── Private rendering ───────────────────────────────────────────────────────
 
   _renderPieces(engine) {
-    this.wrapEl.querySelectorAll('.cell').forEach(e => e.remove());
-    for (let pos = 0; pos < engine.total; pos++) {
-      const row  = Math.floor(pos / engine.cols);
-      const col  = pos % engine.cols;
-      const cell = document.createElement('div');
-      cell.className  = 'cell';
-      cell.dataset.pos = pos;
-      cell.style.cssText = `
-        position:absolute;
-        left:${col * this.cellW}px;
-        top:${row * this.cellH}px;
-        width:${this.cellW}px;
-        height:${this.cellH}px;
-        cursor:grab;
-        user-select:none;
-      `;
-      const cv  = document.createElement('canvas');
-      cv.width  = this.cellW;
-      cv.height = this.cellH;
-      cv.getContext('2d').drawImage(engine.pieces[engine.board[pos]].canvas, 0, 0);
-      cell.appendChild(cv);
-      this.wrapEl.appendChild(cell);
+    const total = engine.total;
+    const existing = this.wrapEl.querySelectorAll('.cell');
+
+    if (existing.length !== total) {
+      existing.forEach(e => e.remove());
+      this._cellEls = [];
+    }
+
+    for (let pos = 0; pos < total; pos++) {
+      const row = Math.floor(pos / engine.cols);
+      const col = pos % engine.cols;
+      const pieceCanvas = engine.pieces[engine.board[pos]].canvas;
+      const styleStr = `position:absolute;left:${col * this.cellW}px;top:${row * this.cellH}px;width:${this.cellW}px;height:${this.cellH}px;cursor:grab;user-select:none;`;
+
+      let cell = this._cellEls[pos];
+      if (!cell) {
+        cell = document.createElement('div');
+        cell.className = 'cell';
+        const cv = document.createElement('canvas');
+        cv.width = this.cellW;
+        cv.height = this.cellH;
+        cell.appendChild(cv);
+        this.wrapEl.appendChild(cell);
+        this._cellEls[pos] = cell;
+      }
+
+      cell.dataset.pos = String(pos);
+      cell.style.cssText = styleStr;
+      const cv = cell.querySelector('canvas');
+      if (cv) cv.getContext('2d').drawImage(pieceCanvas, 0, 0);
     }
   }
 

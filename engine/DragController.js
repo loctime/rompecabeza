@@ -12,23 +12,47 @@ export class DragController {
     this.audio   = audio;
     this._drag   = null;
     this._mmH = this._muH = this._tmH = this._teH = null;
+    this._mdH = null;
+    this._tsH = null;
+    this._destroyed = false;
 
     this._bindBoardEvents();
+  }
+
+  /**
+   * Remueve todos los listeners. Llamar antes de reinicializar la app (p. ej. replay).
+   */
+  destroy() {
+    if (this._destroyed) return;
+    this._removeListeners();
+    if (this._mdH && this.boardUI?.wrapEl) {
+      this.boardUI.wrapEl.removeEventListener('mousedown', this._mdH);
+      this._mdH = null;
+    }
+    if (this._tsH && this.boardUI?.wrapEl) {
+      this.boardUI.wrapEl.removeEventListener('touchstart', this._tsH, { passive: false });
+      this._tsH = null;
+    }
+    this.engine = null;
+    this.boardUI = null;
+    this.audio = null;
+    this._destroyed = true;
   }
 
   // ── Private ─────────────────────────────────────────────────────────────────
 
   _bindBoardEvents() {
-    this.boardUI.wrapEl.addEventListener('mousedown', e => {
+    this._mdH = (e) => {
       const cell = e.target.closest('.cell');
       if (!cell) return;
       e.preventDefault();
       this._startDrag(e.clientX, e.clientY, parseInt(cell.dataset.pos));
       window.addEventListener('mousemove', this._mmH = ev => this._onMove(ev.clientX, ev.clientY));
       window.addEventListener('mouseup',   this._muH = ev => this._onUp(ev.clientX, ev.clientY));
-    });
+    };
+    this.boardUI.wrapEl.addEventListener('mousedown', this._mdH);
 
-    this.boardUI.wrapEl.addEventListener('touchstart', e => {
+    this._tsH = (e) => {
       const cell = e.target.closest('.cell');
       if (!cell) return;
       e.preventDefault();
@@ -43,7 +67,8 @@ export class DragController {
         const t = ev.changedTouches[0];
         this._onUp(t.clientX, t.clientY);
       });
-    }, { passive: false });
+    };
+    this.boardUI.wrapEl.addEventListener('touchstart', this._tsH, { passive: false });
   }
 
   _startDrag(cx, cy, pos) {
