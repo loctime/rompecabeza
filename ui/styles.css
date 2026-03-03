@@ -170,7 +170,7 @@ h1 {
   position: relative;
   flex-shrink: 0;
   touch-action: none;
-  transform-origin: 0 0;
+  transform-origin: center center;
 }
 
 #grid-overlay {
