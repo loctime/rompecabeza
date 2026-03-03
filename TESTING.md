@@ -1,36 +1,52 @@
-# Validación post-auditoría PWA
+# Testing checklist (Fase 1 + Fase 2)
 
-## 1. No hay leaks de listeners
+## 1) Multiusuario local
+1. Abrir app.
+2. Crear usuario A con botón `+ usuario`.
+3. Jugar 1 nivel y ganar/guardar progreso.
+4. Crear usuario B y jugar otro nivel.
+5. Volver a usuario A desde el selector.
+6. Esperado:
+   - progreso de A y B está aislado,
+   - setting `mute` es independiente por usuario,
+   - `logout` vuelve a `default` sin recargar la web.
 
-- Abre la app, juega, pulsa **Jugar de nuevo** varias veces.
-- En DevTools → Performance/Memory, toma un heap snapshot antes y después de 3–4 replays.
-- Comprueba que el número de nodos DOM y de listeners no crece de forma desproporcionada (teardown + `destroy()` evitan duplicados).
+## 2) Migración IndexedDB v1 -> v2
+1. En una build anterior, generar datos legacy (`progress`, `history`, `settings`).
+2. Abrir esta versión.
+3. En DevTools > Application > IndexedDB > `puzzle-platform-db`, validar stores:
+   - `users`
+   - `progressV2`
+   - `sessions`
+   - `settingsV2`
+   - `assetsV2`
+   - `syncQueue`
+4. Esperado:
+   - existe usuario `default`,
+   - settings legacy aparecen en `settingsV2` para `default`,
+   - `history` legacy se convirtió a filas append-only en `sessions`,
+   - no se rompe la carga de progreso.
 
-## 2. App funciona offline
+## 3) Persistencia masiva (modelo append-only)
+1. Completar/reiniciar partidas repetidas (20+ sesiones).
+2. Validar en `sessions` que cada sesión es una fila (`sessionId` único).
+3. Esperado: no hay arrays gigantes por clave.
 
-- Carga la app una vez con red.
-- En DevTools → Application → Service Workers, verifica que el SW está activo.
-- En Network, marca **Offline** y recarga o navega a la URL de la app.
-- Debe cargar el puzzle desde cache; si falla la navegación, debe mostrarse `offline.html`.
+## 4) Regresión de jugabilidad
+1. Arrastrar grupos, fusionar, ganar y reintentar.
+2. Cambiar modo (`classic/timed/zen`).
+3. Esperado: comportamiento jugable sin cambios funcionales.
 
-## 3. Iconos en Android/iOS
+## 5) Sanity tests automáticos
+Ejecutar:
+```bash
+node --test tests/sanity.test.mjs
+```
+Esperado: 3/3 tests en verde.
 
-- **Android (Chrome)**: Menú → “Añadir a la pantalla de inicio”; el icono debe verse (PNG si existen en `/icons/`, si no SVG).
-- **iOS (Safari)**: Compartir → “Añadir a la pantalla de inicio”; comprobar que el icono y el splash se ven bien. Para mejor resultado, añade `icon-192.png` e `icon-512.png` en `/icons/`.
-
-## 4. SW se actualiza y notifica
-
-- Despliega una versión con `CACHE_VERSION` incrementado en `sw.js`.
-- Con la app abierta, cuando el nuevo SW esté en “waiting”, debe aparecer el toast “Nueva versión disponible. Recargar”.
-- Al pulsar **Recargar**, la página debe recargar y usar la nueva versión (sin `skipWaiting` automático hasta que el usuario pulse).
-
-## 5. Touch y replay
-
-- En móvil o con emulación táctil: arrastrar piezas debe funcionar sin que el body capture el gesto (solo `#board-wrap` tiene `touch-action: none`).
-- Pulsar “Jugar de nuevo” no debe duplicar listeners ni dejar el tab colgado.
-
-## 6. Audio tras instalar
-
-- Instala la PWA (Añadir a pantalla de inicio).
-- Abre la app desde el icono; en el primer toque o clic debe hacerse el warmup del AudioContext.
-- Los sonidos (movimiento, fusión, victoria) deben reproducirse después de ese primer gesto.
+## 6) Preparación backend (stubs)
+1. Verificar que existen:
+   - `runtime/auth.js` (`AuthProvider` + `LocalAuthProvider`)
+   - `runtime/sync.js` (`SyncOrchestrator`)
+   - `runtime/leaderboard.js` (`LeaderboardService` placeholder)
+2. Esperado: capa preparada para integrar Firebase/Auth0/backend propio sin romper contrato local.

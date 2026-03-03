@@ -1,164 +1,175 @@
-/**
- * main.js — Orchestrator
- * Wires engine, level, audio and UI together.
- * To add a new game: swap the level config and re-call init().
- * Teardown previo en cada init/replay para evitar listeners duplicados.
- */
-
-import { PuzzleEngine } from './engine/PuzzleEngine.js';
 import { DragController } from './engine/DragController.js';
-import { mountainNight }  from './levels/mountainNight.js';
-import { AudioManager }   from './audio/AudioManager.js';
-import { BoardUI }        from './ui/BoardUI.js';
-import { HUD }            from './ui/HUD.js';
+import { BoardUI } from './ui/BoardUI.js';
+import { HUD } from './ui/HUD.js';
+import { levels, getLevelById } from './data/levels.js';
+import { EventBus, EVENTS } from './runtime/events.js';
+import { GameSession } from './runtime/GameSession.js';
+import { AssetManager } from './runtime/AssetManager.js';
+import { AppStore } from './runtime/store.js';
+import { AudioEngine } from './audio/AudioEngine.js';
+import { SfxBank } from './audio/SfxBank.js';
+import { MusicController } from './audio/MusicController.js';
+import { LocalAuthProvider } from './runtime/auth.js';
+import { setActiveUser } from './storage/persistence.js';
 
-// ── Active level config (swap this to change game) ───────────────────────────
-const LEVEL = mountainNight;
+const bus = new EventBus();
+const assetManager = new AssetManager();
+const store = new AppStore();
+const auth = new LocalAuthProvider();
+const audioEngine = new AudioEngine();
+const sfx = new SfxBank(audioEngine);
+const music = new MusicController(audioEngine);
 
-// ── Module instances ──────────────────────────────────────────────────────────
-let engine, drag, audio, boardUI, hud;
-let _onMove, _onFuse, _onWin;
+let session;
+let boardUI;
+let hud;
+let drag;
+let pieceCanvases = [];
+let unsubscribers = [];
+let currentUser = null;
 
-/**
- * Limpia instancias anteriores: destroy de controladores, remove de listeners del engine.
- * Llamar antes de cada init() para que replay/no duplique listeners ni renders.
- */
 function teardown() {
-  if (drag) {
-    drag.destroy();
-    drag = null;
-  }
-  if (hud) {
-    hud.destroy();
-    hud = null;
-  }
-  if (boardUI) {
-    boardUI.destroy();
-    boardUI = null;
-  }
-  if (engine && _onMove !== undefined) {
-    engine.off('move', _onMove);
-    engine.off('fuse', _onFuse);
-    engine.off('win', _onWin);
-    _onMove = _onFuse = _onWin = undefined;
-  }
-  engine = null;
-  audio = null;
+  drag?.destroy();
+  boardUI?.destroy();
+  unsubscribers.forEach((u) => u());
+  unsubscribers = [];
+  session?.stop();
+}
+
+async function boot({ levelId, mode }) {
+  teardown();
+  const level = getLevelById(levelId);
+  const image = await assetManager.preload(level) || await assetManager.restore(level.id) || await level.image.generate();
+  const sliced = assetManager.buildPieces(image, level.board.cols, level.board.rows);
+  pieceCanvases = sliced.pieces.map((p) => p.canvas);
+
+  session = new GameSession({ level, mode, bus, userId: currentUser?.userId || 'default' });
+  await session.restoreProgress();
+
+  boardUI = new BoardUI({
+    wrapEl: document.getElementById('board-wrap'),
+    ghostEl: document.getElementById('ghost'),
+    hoverEl: document.getElementById('hover-overlay'),
+    gridOverlayEl: document.getElementById('grid-overlay'),
+    boardW: level.board.boardW,
+    boardH: level.board.boardH,
+    cols: level.board.cols,
+    rows: level.board.rows,
+  });
+  boardUI.setPieceCanvases(pieceCanvases);
+
+  hud = new HUD({
+    statusEl: document.getElementById('status'),
+    winEl: document.getElementById('win-overlay'),
+    shuffleBtn: document.getElementById('shuffle-btn'),
+    replayBtn: document.getElementById('replay-btn'),
+    levelSelectEl: document.getElementById('level-select'),
+    modeSelectEl: document.getElementById('mode-select'),
+    muteBtn: document.getElementById('mute-btn'),
+  });
+
+  drag = new DragController({ session, boardUI });
+  boardUI.render(session, pieceCanvases);
+  hud.update(session.getSnapshot());
+
+  hud.onShuffle(() => session.shuffle());
+  hud.onReplay(() => { hud.hideWin(); boot({ levelId, mode }); });
+  hud.onLevelChange((nextLevelId) => boot({ levelId: nextLevelId, mode }));
+  hud.onModeChange((nextMode) => boot({ levelId, mode: nextMode }));
+  hud.onMute(async () => {
+    const muted = !store.state.settings.mute;
+    await store.setSetting('mute', muted);
+    audioEngine.setMuted(muted);
+    hud.setMuteLabel(muted);
+  });
+
+  unsubscribers.push(bus.on(EVENTS.MOVE_APPLIED, ({ affected }) => {
+    boardUI.render(session, pieceCanvases, affected);
+    hud.update(session.getSnapshot());
+    sfx.playMove();
+  }));
+  unsubscribers.push(bus.on(EVENTS.FUSION_GAINED, () => sfx.playFusion()));
+  unsubscribers.push(bus.on(EVENTS.PUZZLE_SOLVED, () => { sfx.playWin(); hud.showWin(); }));
+  unsubscribers.push(bus.on(EVENTS.TIMER_TICK, () => hud.update(session.getSnapshot())));
+  unsubscribers.push(bus.on(EVENTS.SESSION_END, async (payload) => {
+    await store.markLevelResult(payload.levelId, payload.mode, {
+      bestScore: Math.max(store.state.progress[payload.levelId]?.bestScore || 0, payload.score),
+      solved: payload.reason === 'win',
+    });
+  }));
+
+  session.start();
+  audioEngine.warmup();
+  music.startAmbient();
+}
+
+async function renderUserMenu() {
+  const userSelect = document.getElementById('user-select');
+  const users = await auth.listUsers();
+  userSelect.innerHTML = users.map((u) => `<option value="${u.userId}">${u.displayName}</option>`).join('');
+  userSelect.value = currentUser?.userId || 'default';
+}
+
+async function switchUser(userId) {
+  const user = await auth.login(userId);
+  if (!user) return;
+  currentUser = user;
+  setActiveUser(user.userId);
+  store.setUser(user.userId);
+  await store.hydrate();
+  await renderUserMenu();
+  await boot({ levelId: store.state.uiPrefs.levelId, mode: store.state.uiPrefs.mode });
+  document.getElementById('active-user').textContent = `usuario: ${user.displayName}`;
+}
+
+async function initIdentity() {
+  currentUser = await auth.init();
+  setActiveUser(currentUser.userId);
+  store.setUser(currentUser.userId);
+  await renderUserMenu();
+
+  document.getElementById('user-select').addEventListener('change', async (ev) => {
+    await switchUser(ev.target.value);
+  });
+
+  document.getElementById('user-create-btn').addEventListener('click', async () => {
+    const name = prompt('Nombre del nuevo usuario local');
+    if (!name) return;
+    const created = await auth.createUser(name);
+    if (!created) return;
+    await switchUser(created.userId);
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    const user = await auth.logout();
+    await switchUser(user.userId);
+  });
+
+  document.getElementById('active-user').textContent = `usuario: ${currentUser.displayName}`;
 }
 
 async function init() {
-  teardown();
+  await initIdentity();
+  await store.hydrate();
 
-  // 1. Generate / load the source image for this level
-  const image = await LEVEL.generateImage();
+  const levelSelect = document.getElementById('level-select');
+  levelSelect.innerHTML = levels.map((l) => `<option value="${l.id}">${l.meta.title}</option>`).join('');
+  levelSelect.value = store.state.uiPrefs.levelId;
+  document.getElementById('mode-select').value = store.state.uiPrefs.mode;
+  audioEngine.setMuted(store.state.settings.mute);
+  hud?.setMuteLabel?.(store.state.settings.mute);
 
-  // 2. Boot the engine with level config
-  engine = new PuzzleEngine({
-    cols:   LEVEL.cols,
-    rows:   LEVEL.rows,
-    image,
-  });
-  engine.shuffle();
+  await boot({ levelId: store.state.uiPrefs.levelId, mode: store.state.uiPrefs.mode });
 
-  // 3. Boot UI
-  boardUI = new BoardUI({
-    wrapEl:        document.getElementById('board-wrap'),
-    ghostEl:       document.getElementById('ghost'),
-    hoverEl:       document.getElementById('hover-overlay'),
-    gridOverlayEl: document.getElementById('grid-overlay'),
-    boardW:        LEVEL.boardW,
-    boardH:        LEVEL.boardH,
-    cols:          LEVEL.cols,
-    rows:          LEVEL.rows,
-  });
-
-  hud = new HUD({
-    statusEl:   document.getElementById('status'),
-    winEl:      document.getElementById('win-overlay'),
-    shuffleBtn: document.getElementById('shuffle-btn'),
-    replayBtn:  document.getElementById('replay-btn'),
-    cols:       LEVEL.cols,
-    rows:       LEVEL.rows,
-  });
-
-  // 4. Boot audio (warmup se hace en primer gesto del usuario)
-  audio = new AudioManager();
-
-  // 5. Boot drag controller — connects engine ↔ UI
-  drag = new DragController({ engine, boardUI, audio });
-
-  // 6. Initial render
-  boardUI.render(engine);
-  hud.update(engine);
-
-  // 7. Wire HUD buttons (HUD guarda refs y los remueve en destroy)
-  hud.onShuffle(() => {
-    engine.shuffle();
-    boardUI.render(engine);
-    hud.update(engine);
-  });
-
-  hud.onReplay(() => {
-    hud.hideWin();
-    init();
-  });
-
-  // 8. Wire engine events → HUD / audio (refs para poder hacer off en teardown)
-  _onMove = () => {
-    boardUI.render(engine);
-    hud.update(engine);
-    audio.play('move');
-  };
-  _onFuse = () => { audio.play('fuse'); };
-  _onWin = () => {
-    audio.play('win');
-    setTimeout(() => hud.showWin(), 350);
-  };
-  engine.on('move', _onMove);
-  engine.on('fuse', _onFuse);
-  engine.on('win', _onWin);
-
-  // Warmup de AudioContext en primer gesto (políticas autoplay)
-  const warmup = () => {
-    if (audio) audio.warmup();
-  };
-  document.addEventListener('click', warmup, { once: true });
-  document.addEventListener('touchstart', warmup, { once: true, passive: true });
+  document.addEventListener('click', () => audioEngine.warmup(), { once: true });
+  document.addEventListener('touchstart', () => audioEngine.warmup(), { once: true, passive: true });
 }
 
-// PWA: registrar Service Worker y notificación cuando hay nueva versión
-if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    const swUrl = new URL('sw.js', document.baseURI || window.location.href).href;
-    navigator.serviceWorker.register(swUrl).then((reg) => {
-      reg.addEventListener('updatefound', () => {
-        const w = reg.installing;
-        w.addEventListener('statechange', () => {
-          if (w.state === 'installed' && reg.waiting) {
-            notifyNewVersion(reg);
-          }
-        });
-      });
-      if (reg.waiting) notifyNewVersion(reg);
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        window.location.reload();
-      });
-    }).catch((err) => {
-      console.warn('Service Worker registration failed:', err);
-    });
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try { await navigator.serviceWorker.register(new URL('service-worker.js', document.baseURI).href); }
+    catch (e) { console.warn('SW registration failed', e); }
   });
-}
-
-function notifyNewVersion(reg) {
-  if (document.getElementById('sw-update-toast')) return;
-  const msg = document.createElement('div');
-  msg.id = 'sw-update-toast';
-  msg.innerHTML = 'Nueva versión disponible. <button id="sw-reload-btn">Recargar</button>';
-  msg.style.cssText = 'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#0f0e0c;color:#e8e0d0;border:1px solid #c9a84c;padding:10px 16px;border-radius:8px;font-size:0.85rem;z-index:10000;';
-  document.body.appendChild(msg);
-  document.getElementById('sw-reload-btn').onclick = () => {
-    if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-  };
 }
 
 init();
