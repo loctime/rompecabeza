@@ -67,7 +67,7 @@ export class BoardUI {
   _renderGrid(session) {
     const fused = session.getFusedEdges();
     this._gctx.clearRect(0, 0, this.boardW, this.boardH);
-    this._gctx.strokeStyle = 'rgba(201,168,76,0.3)';
+    this._gctx.strokeStyle = 'rgba(255,255,255,0.08)';
     this._gctx.lineWidth = 1;
     for (let c = 1; c < this.cols; c++) {
       for (let r = 0; r < this.rows; r++) {
@@ -112,7 +112,7 @@ export class BoardUI {
   startGhost(canvas, cx, cy, ox, oy) { this.ghostEl.width = canvas.width; this.ghostEl.height = canvas.height; this.ghostEl.style.cssText = `display:block;width:${canvas.width}px;height:${canvas.height}px;`; this.ghostEl.getContext('2d').drawImage(canvas, 0, 0); this.moveGhost(cx, cy, ox, oy); }
   moveGhost(cx, cy, ox, oy) { this.ghostEl.style.left = (cx - ox) + 'px'; this.ghostEl.style.top = (cy - oy) + 'px'; }
   endGhost() { this.ghostEl.style.display = 'none'; }
-  showHover(positions, session) { if (!positions.length) return this.clearHover(); const rs = positions.map((p) => Math.floor(p / session.state.cols)); const cs = positions.map((p) => p % session.state.cols); const minR = Math.min(...rs), minC = Math.min(...cs), maxR = Math.max(...rs), maxC = Math.max(...cs); this.hoverEl.style.cssText = `display:block;position:absolute;left:${minC * this.cellW}px;top:${minR * this.cellH}px;width:${(maxC - minC + 1) * this.cellW}px;height:${(maxR - minR + 1) * this.cellH}px;pointer-events:none;z-index:11;border:2px solid #c9a84c;box-shadow:inset 0 0 16px rgba(201,168,76,0.12);`; }
+  showHover(positions, session) { if (!positions.length) return this.clearHover(); const rs = positions.map((p) => Math.floor(p / session.state.cols)); const cs = positions.map((p) => p % session.state.cols); const minR = Math.min(...rs), minC = Math.min(...cs), maxR = Math.max(...rs), maxC = Math.max(...cs); this.hoverEl.style.cssText = `display:block;position:absolute;left:${minC * this.cellW}px;top:${minR * this.cellH}px;width:${(maxC - minC + 1) * this.cellW}px;height:${(maxR - minR + 1) * this.cellH}px;pointer-events:none;z-index:11;border:2px solid rgba(255,255,255,0.4);box-shadow:inset 0 0 16px rgba(255,255,255,0.06);`; }
   clearHover() { this.hoverEl.style.display = 'none'; }
   dimGroup(group, dim) { group.forEach((p) => { const el = this._cellEls[p]; if (el) el.style.opacity = dim ? '0.25' : ''; }); }
 }
