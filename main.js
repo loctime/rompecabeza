@@ -26,12 +26,14 @@ const boardContainerEl = document.getElementById('board-container');
 const boardWrapEl = document.getElementById('board-wrap');
 
 function showLevelGrid() {
+  document.body.dataset.view = 'levels';
   levelGridEl.classList.remove('hidden');
   gameAreaEl.classList.add('hidden');
   currentLevelId = null;
 }
 
 function showGame() {
+  document.body.dataset.view = 'game';
   levelGridEl.classList.add('hidden');
   gameAreaEl.classList.remove('hidden');
 }
@@ -49,7 +51,8 @@ function teardown() {
 function applyBoardScale(boardW, boardH) {
   if (!boardContainerEl || !boardWrapEl) return;
   const padding = 24;
-  const headerGap = 80;
+  // En juego ocultamos/compactamos el header, así que reservamos menos alto.
+  const headerGap = document.body.dataset.view === 'game' ? 24 : 80;
   const availW = Math.min(document.documentElement.clientWidth, window.innerWidth) - padding;
   const availH = Math.min(document.documentElement.clientHeight, window.innerHeight) - headerGap - padding;
   const scale = Math.min(1, availW / boardW, availH / boardH);
@@ -150,6 +153,7 @@ function renderLevelGrid() {
 async function init() {
   store.setUser('default');
   await store.hydrate();
+  document.body.dataset.view = 'levels';
   document.body.dataset.hideBoardBorders = store.state.settings.hideBoardBorders !== false ? 'true' : 'false';
   renderLevelGrid();
 

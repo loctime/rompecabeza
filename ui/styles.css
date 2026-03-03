@@ -45,6 +45,17 @@ body {
   overflow-x: hidden;
 }
 
+/* En juego queremos el tablero más arriba y con más alto útil */
+body[data-view="game"] {
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+body[data-view="game"] h1,
+body[data-view="game"] #subtitle {
+  display: none;
+}
+
 h1 {
   font-family: 'Playfair Display', serif;
   font-size: 1.6rem;
