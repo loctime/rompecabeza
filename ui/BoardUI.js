@@ -19,7 +19,15 @@ export class BoardUI {
     this._cellEls = [];
   }
 
-  destroy() { this._cellEls = []; }
+  destroy() {
+    if (this.wrapEl) {
+      this.wrapEl.innerHTML = '';
+    }
+    if (this._gctx && this.gridOverlayEl) {
+      this._gctx.clearRect(0, 0, this.gridOverlayEl.width, this.gridOverlayEl.height);
+    }
+    this._cellEls = [];
+  }
 
   render(session, pieceCanvases, affected = null) {
     this._renderPieces(session, pieceCanvases, affected);
