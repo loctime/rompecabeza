@@ -101,7 +101,7 @@ h1 {
 
 .level-card img {
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 9 / 16;
   object-fit: cover;
   display: block;
 }
@@ -135,15 +135,19 @@ h1 {
   gap: 10px;
   width: 100%;
   max-width: 100%;
+  flex: 1;
+  min-height: 0;
   overflow-x: hidden;
 }
 
 #board-container {
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
   width: 100%;
   max-width: 100%;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
 }
 

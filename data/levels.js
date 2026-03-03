@@ -1,5 +1,6 @@
-const BOARD_W = 480;
-const BOARD_H = 360;
+// Proporción 9:16 (móvil portrait), coincide con imágenes 720×1280
+const BOARD_W = 360;
+const BOARD_H = 640;
 
 // Títulos amigables para los 50 niveles (coinciden con las imágenes descargadas).
 const TITLES = [

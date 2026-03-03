@@ -3,6 +3,9 @@ Script para descargar 50 imágenes de alta calidad para rompecabezas.
 Fuente: Unsplash API (requiere API key gratuita)
 Filtros: brillo, contraste, entropía — ideal para puzzles
 
+Por defecto: formato móvil 9:16 (portrait) para ocupar más pantalla en celular.
+Para escritorio podés usar RESOLUCION="1280x720" y ORIENTACION="landscape".
+
 Cómo obtener tu API key GRATIS:
   1. Ir a https://unsplash.com/developers
   2. Click en "Register as a developer"
@@ -29,7 +32,12 @@ API_KEY = "H7LHwbEeajAJkof-sk9viPMTER-n9WV5jERs2JL2Yy0"   # ← Reemplazá con t
 
 CARPETA = "assets/levels"      # Carpeta de salida
 CANTIDAD = 50                  # Imágenes a descargar
-RESOLUCION = "1280x720"        # Resolución final (ancho x alto)
+
+# Resolución: para CELULAR (portrait, ocupa más pantalla) usar 9:16
+# Ejemplos: "720x1280" (9:16), "1080x1920" (9:16 HD)
+# Para escritorio landscape: "1280x720" (16:9)
+RESOLUCION = "720x1280"        # 9:16 — ideal para móvil en vertical
+ORIENTACION = "portrait"       # "portrait" para móvil | "landscape" para escritorio
 
 # Umbrales de calidad (podés ajustar)
 BRILLO_MIN = 65       # 0–255 — descarta imágenes muy oscuras
@@ -139,7 +147,7 @@ def buscar_unsplash(query, page=1):
         "query": query,
         "per_page": 10,
         "page": page,
-        "orientation": "landscape",
+        "orientation": ORIENTACION,
         "order_by": "relevant",
     })
     url = f"https://api.unsplash.com/search/photos?{params}"
