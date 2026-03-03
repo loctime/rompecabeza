@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0f0e0c">
   <title>Puzzle</title>
   <link rel="manifest" href="manifest.json">
@@ -16,9 +16,11 @@
 
   <div id="game-area" class="game-area hidden">
     <button id="back-levels-btn" class="back-btn">← Niveles</button>
-    <div id="board-wrap">
-      <canvas id="grid-overlay"></canvas>
-      <div id="hover-overlay"></div>
+    <div id="board-container">
+      <div id="board-wrap">
+        <canvas id="grid-overlay"></canvas>
+        <div id="hover-overlay"></div>
+      </div>
     </div>
     <div id="status"></div>
     <button id="shuffle-btn">mezclar</button>

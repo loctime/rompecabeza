@@ -18,9 +18,12 @@ let drag;
 let pieceCanvases = [];
 let unsubscribers = [];
 let currentLevelId = null;
+let boardScaleCleanup = null;
 
 const levelGridEl = document.getElementById('level-grid');
 const gameAreaEl = document.getElementById('game-area');
+const boardContainerEl = document.getElementById('board-container');
+const boardWrapEl = document.getElementById('board-wrap');
 
 function showLevelGrid() {
   levelGridEl.classList.remove('hidden');
@@ -34,11 +37,36 @@ function showGame() {
 }
 
 function teardown() {
+  boardScaleCleanup?.();
+  boardScaleCleanup = null;
   drag?.destroy();
   boardUI?.destroy();
   unsubscribers.forEach((u) => u());
   unsubscribers = [];
   session?.stop();
+}
+
+function applyBoardScale(boardW, boardH) {
+  if (!boardContainerEl || !boardWrapEl) return;
+  const padding = 24;
+  const headerGap = 80;
+  const availW = Math.min(document.documentElement.clientWidth, window.innerWidth) - padding;
+  const availH = Math.min(document.documentElement.clientHeight, window.innerHeight) - headerGap - padding;
+  const scale = Math.min(1, availW / boardW, availH / boardH);
+  boardWrapEl.style.width = boardW + 'px';
+  boardWrapEl.style.height = boardH + 'px';
+  boardWrapEl.style.transform = `scale(${scale})`;
+  boardContainerEl.style.width = boardW * scale + 'px';
+  boardContainerEl.style.height = boardH * scale + 'px';
+}
+
+function setupBoardScale(level) {
+  boardScaleCleanup?.();
+  const { boardW, boardH } = level.board;
+  applyBoardScale(boardW, boardH);
+  const onResize = () => applyBoardScale(boardW, boardH);
+  window.addEventListener('resize', onResize);
+  boardScaleCleanup = () => window.removeEventListener('resize', onResize);
 }
 
 async function boot(levelId) {
@@ -52,7 +80,7 @@ async function boot(levelId) {
   await session.restoreProgress();
 
   boardUI = new BoardUI({
-    wrapEl: document.getElementById('board-wrap'),
+    wrapEl: boardWrapEl,
     ghostEl: document.getElementById('ghost'),
     hoverEl: document.getElementById('hover-overlay'),
     gridOverlayEl: document.getElementById('grid-overlay'),
@@ -62,6 +90,7 @@ async function boot(levelId) {
     rows: level.board.rows,
   });
   boardUI.setPieceCanvases(pieceCanvases);
+  setupBoardScale(level);
 
   hud = new HUD({
     statusEl: document.getElementById('status'),

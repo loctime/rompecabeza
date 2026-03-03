@@ -55,8 +55,10 @@ export class DragController {
     const group = this.session.getGroup(pos, fused);
     const { ghostCanvas, minR, minC } = this.boardUI.buildGroupCanvas(group, this.session);
     const rect = this.boardUI.wrapEl.getBoundingClientRect();
-    const ox = (cx - rect.left) - minC * this.boardUI.cellW;
-    const oy = (cy - rect.top) - minR * this.boardUI.cellH;
+    const cols = this.session.state.cols, rows = this.session.state.rows;
+    const cellWSc = rect.width / cols, cellHSc = rect.height / rows;
+    const ox = (cx - rect.left) - minC * cellWSc;
+    const oy = (cy - rect.top) - minR * cellHSc;
     this.boardUI.startGhost(ghostCanvas, cx, cy, ox, oy);
     this.boardUI.dimGroup(group, true);
     this._drag = { group, originPos: pos, ox, oy };
@@ -99,7 +101,8 @@ export class DragController {
     const rect = this.boardUI.wrapEl.getBoundingClientRect();
     const bx = (cx - this._drag.ox) - rect.left;
     const by = (cy - this._drag.oy) - rect.top;
-    return { col: Math.round(bx / this.boardUI.cellW), row: Math.round(by / this.boardUI.cellH) };
+    const cols = this.session.state.cols, rows = this.session.state.rows;
+    return { col: Math.round(bx * cols / rect.width), row: Math.round(by * rows / rect.height) };
   }
 
   _removeListeners() {
