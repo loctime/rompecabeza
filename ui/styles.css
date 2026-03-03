@@ -1,38 +1,11 @@
 /**
  * ui/styles.css
  * Global styles for the puzzle platform.
- * Fuentes: locales (woff2) si existen, si no @import remoto.
+ * Fuentes: Google Fonts (Playfair Display, DM Mono).
+ * Para PWA offline: descarga los .woff2 y ponlos en /fonts/ (ver fonts/README.md).
  */
 
-@font-face {
-  font-family: 'DM Mono';
-  font-style: normal;
-  font-weight: 300;
-  font-display: swap;
-  src: url('../fonts/dm-mono-300.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'DM Mono';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('../fonts/dm-mono-400.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Playfair Display';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('../fonts/playfair-400.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Playfair Display';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('../fonts/playfair-700.woff2') format('woff2');
-}
-/* Fallback: si no hay woff2 locales, el navegador usará monospace/serif */
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400&family=Playfair+Display:wght@400;700&display=swap');
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html, body {
