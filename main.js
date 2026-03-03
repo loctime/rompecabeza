@@ -53,6 +53,7 @@ function applyBoardScale(boardW, boardH) {
   const availW = Math.min(document.documentElement.clientWidth, window.innerWidth) - padding;
   const availH = Math.min(document.documentElement.clientHeight, window.innerHeight) - headerGap - padding;
   const scale = Math.min(1, availW / boardW, availH / boardH);
+  boardContainerEl.style.setProperty('--board-scale', String(scale));
   boardWrapEl.style.width = boardW + 'px';
   boardWrapEl.style.height = boardH + 'px';
   boardWrapEl.style.transform = `scale(${scale})`;
@@ -79,6 +80,7 @@ async function boot(levelId) {
   session = new GameSession({ level, mode: 'classic', bus, userId: 'default' });
   await session.restoreProgress();
 
+  document.body.dataset.hideBoardBorders = store.state.settings.hideBoardBorders ? 'true' : 'false';
   boardUI = new BoardUI({
     wrapEl: boardWrapEl,
     ghostEl: document.getElementById('ghost'),
@@ -88,6 +90,7 @@ async function boot(levelId) {
     boardH: level.board.boardH,
     cols: level.board.cols,
     rows: level.board.rows,
+    hideBoardBorders: store.state.settings.hideBoardBorders !== false,
   });
   boardUI.setPieceCanvases(pieceCanvases);
   setupBoardScale(level);
@@ -147,6 +150,7 @@ function renderLevelGrid() {
 async function init() {
   store.setUser('default');
   await store.hydrate();
+  document.body.dataset.hideBoardBorders = store.state.settings.hideBoardBorders !== false ? 'true' : 'false';
   renderLevelGrid();
 
   document.getElementById('back-levels-btn').addEventListener('click', () => {

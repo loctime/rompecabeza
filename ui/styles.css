@@ -193,6 +193,10 @@ h1 {
   box-shadow: 0 8px 40px rgba(0,0,0,0.7), 0 0 24px rgba(201,168,76,0.35);
   display: none;
 }
+body[data-hide-board-borders="true"] #ghost {
+  border: none;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+}
 
 /* ── HUD ── */
 #status {

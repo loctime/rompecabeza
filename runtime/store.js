@@ -6,7 +6,7 @@ export class AppStore {
     this.settingsRepo = new SettingsRepository(userId);
     this.progressRepo = new ProgressRepository(userId);
     this.state = {
-      settings: { mute: false, theme: 'dark', musicVolume: 0.6, sfxVolume: 0.9 },
+      settings: { mute: false, theme: 'dark', musicVolume: 0.6, sfxVolume: 0.9, hideBoardBorders: true },
       progress: {},
       statsByLevel: {},
       uiPrefs: { mode: 'classic', levelId: 'mountain-night' },
@@ -26,6 +26,7 @@ export class AppStore {
       theme: await this.settingsRepo.get('theme', 'dark'),
       musicVolume: await this.settingsRepo.get('musicVolume', 0.6),
       sfxVolume: await this.settingsRepo.get('sfxVolume', 0.9),
+      hideBoardBorders: await this.settingsRepo.get('hideBoardBorders', true),
     };
     this.state.progress = await this.progressRepo.getSummaryByLevel();
     this.emit();
