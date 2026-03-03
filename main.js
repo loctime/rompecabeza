@@ -6,19 +6,10 @@ import { EventBus, EVENTS } from './runtime/events.js';
 import { GameSession } from './runtime/GameSession.js';
 import { AssetManager } from './runtime/AssetManager.js';
 import { AppStore } from './runtime/store.js';
-import { AudioEngine } from './audio/AudioEngine.js';
-import { SfxBank } from './audio/SfxBank.js';
-import { MusicController } from './audio/MusicController.js';
-import { LocalAuthProvider } from './runtime/auth.js';
-import { setActiveUser } from './storage/persistence.js';
 
 const bus = new EventBus();
 const assetManager = new AssetManager();
 const store = new AppStore();
-const auth = new LocalAuthProvider();
-const audioEngine = new AudioEngine();
-const sfx = new SfxBank(audioEngine);
-const music = new MusicController(audioEngine);
 
 let session;
 let boardUI;
@@ -26,7 +17,21 @@ let hud;
 let drag;
 let pieceCanvases = [];
 let unsubscribers = [];
-let currentUser = null;
+let currentLevelId = null;
+
+const levelGridEl = document.getElementById('level-grid');
+const gameAreaEl = document.getElementById('game-area');
+
+function showLevelGrid() {
+  levelGridEl.classList.remove('hidden');
+  gameAreaEl.classList.add('hidden');
+  currentLevelId = null;
+}
+
+function showGame() {
+  levelGridEl.classList.add('hidden');
+  gameAreaEl.classList.remove('hidden');
+}
 
 function teardown() {
   drag?.destroy();
@@ -36,14 +41,14 @@ function teardown() {
   session?.stop();
 }
 
-async function boot({ levelId, mode }) {
+async function boot(levelId) {
   teardown();
   const level = getLevelById(levelId);
   const image = await assetManager.preload(level) || await assetManager.restore(level.id) || await level.image.generate();
   const sliced = assetManager.buildPieces(image, level.board.cols, level.board.rows);
   pieceCanvases = sliced.pieces.map((p) => p.canvas);
 
-  session = new GameSession({ level, mode, bus, userId: currentUser?.userId || 'default' });
+  session = new GameSession({ level, mode: 'classic', bus, userId: 'default' });
   await session.restoreProgress();
 
   boardUI = new BoardUI({
@@ -63,9 +68,6 @@ async function boot({ levelId, mode }) {
     winEl: document.getElementById('win-overlay'),
     shuffleBtn: document.getElementById('shuffle-btn'),
     replayBtn: document.getElementById('replay-btn'),
-    levelSelectEl: document.getElementById('level-select'),
-    modeSelectEl: document.getElementById('mode-select'),
-    muteBtn: document.getElementById('mute-btn'),
   });
 
   drag = new DragController({ session, boardUI });
@@ -73,23 +75,13 @@ async function boot({ levelId, mode }) {
   hud.update(session.getSnapshot());
 
   hud.onShuffle(() => session.shuffle());
-  hud.onReplay(() => { hud.hideWin(); boot({ levelId, mode }); });
-  hud.onLevelChange((nextLevelId) => boot({ levelId: nextLevelId, mode }));
-  hud.onModeChange((nextMode) => boot({ levelId, mode: nextMode }));
-  hud.onMute(async () => {
-    const muted = !store.state.settings.mute;
-    await store.setSetting('mute', muted);
-    audioEngine.setMuted(muted);
-    hud.setMuteLabel(muted);
-  });
+  hud.onReplay(() => { hud.hideWin(); boot(levelId); });
 
   unsubscribers.push(bus.on(EVENTS.MOVE_APPLIED, ({ affected }) => {
     boardUI.render(session, pieceCanvases, affected);
     hud.update(session.getSnapshot());
-    sfx.playMove();
   }));
-  unsubscribers.push(bus.on(EVENTS.FUSION_GAINED, () => sfx.playFusion()));
-  unsubscribers.push(bus.on(EVENTS.PUZZLE_SOLVED, () => { sfx.playWin(); hud.showWin(); }));
+  unsubscribers.push(bus.on(EVENTS.PUZZLE_SOLVED, () => hud.showWin()));
   unsubscribers.push(bus.on(EVENTS.TIMER_TICK, () => hud.update(session.getSnapshot())));
   unsubscribers.push(bus.on(EVENTS.SESSION_END, async (payload) => {
     await store.markLevelResult(payload.levelId, payload.mode, {
@@ -99,70 +91,46 @@ async function boot({ levelId, mode }) {
   }));
 
   session.start();
-  audioEngine.warmup();
-  music.startAmbient();
+  currentLevelId = levelId;
+  showGame();
 }
 
-async function renderUserMenu() {
-  const userSelect = document.getElementById('user-select');
-  const users = await auth.listUsers();
-  userSelect.innerHTML = users.map((u) => `<option value="${u.userId}">${u.displayName}</option>`).join('');
-  userSelect.value = currentUser?.userId || 'default';
-}
-
-async function switchUser(userId) {
-  const user = await auth.login(userId);
-  if (!user) return;
-  currentUser = user;
-  setActiveUser(user.userId);
-  store.setUser(user.userId);
-  await store.hydrate();
-  await renderUserMenu();
-  await boot({ levelId: store.state.uiPrefs.levelId, mode: store.state.uiPrefs.mode });
-  document.getElementById('active-user').textContent = `usuario: ${user.displayName}`;
-}
-
-async function initIdentity() {
-  currentUser = await auth.init();
-  setActiveUser(currentUser.userId);
-  store.setUser(currentUser.userId);
-  await renderUserMenu();
-
-  document.getElementById('user-select').addEventListener('change', async (ev) => {
-    await switchUser(ev.target.value);
+function renderLevelGrid() {
+  levelGridEl.innerHTML = '';
+  levels.forEach((level) => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'level-card';
+    card.dataset.levelId = level.id;
+    const num = level.id.replace('nivel-', '');
+    const stars = '★'.repeat(level.meta.difficulty);
+    card.innerHTML = `
+      <img src="./assets/levels/${level.id}.jpg" alt="" loading="lazy" />
+      <span class="level-num">${num}</span>
+      <span class="level-title">${level.meta.title}</span>
+      <span class="level-diff">${stars}</span>
+    `;
+    card.addEventListener('click', () => boot(level.id));
+    levelGridEl.appendChild(card);
   });
-
-  document.getElementById('user-create-btn').addEventListener('click', async () => {
-    const name = prompt('Nombre del nuevo usuario local');
-    if (!name) return;
-    const created = await auth.createUser(name);
-    if (!created) return;
-    await switchUser(created.userId);
-  });
-
-  document.getElementById('logout-btn').addEventListener('click', async () => {
-    const user = await auth.logout();
-    await switchUser(user.userId);
-  });
-
-  document.getElementById('active-user').textContent = `usuario: ${currentUser.displayName}`;
 }
 
 async function init() {
-  await initIdentity();
+  store.setUser('default');
   await store.hydrate();
+  renderLevelGrid();
 
-  const levelSelect = document.getElementById('level-select');
-  levelSelect.innerHTML = levels.map((l) => `<option value="${l.id}">${l.meta.title}</option>`).join('');
-  levelSelect.value = store.state.uiPrefs.levelId;
-  document.getElementById('mode-select').value = store.state.uiPrefs.mode;
-  audioEngine.setMuted(store.state.settings.mute);
-  hud?.setMuteLabel?.(store.state.settings.mute);
+  document.getElementById('back-levels-btn').addEventListener('click', () => {
+    teardown();
+    hud?.hideWin();
+    showLevelGrid();
+  });
 
-  await boot({ levelId: store.state.uiPrefs.levelId, mode: store.state.uiPrefs.mode });
-
-  document.addEventListener('click', () => audioEngine.warmup(), { once: true });
-  document.addEventListener('touchstart', () => audioEngine.warmup(), { once: true, passive: true });
+  document.getElementById('win-levels-btn').addEventListener('click', () => {
+    hud?.hideWin();
+    teardown();
+    showLevelGrid();
+  });
 }
 
 if ('serviceWorker' in navigator) {

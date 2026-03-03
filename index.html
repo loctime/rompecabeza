@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0f0e0c">
-  <title>Puzzle Platform</title>
+  <title>Puzzle</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="ui/styles.css">
 </head>
@@ -12,32 +12,26 @@
   <h1>Puzzle</h1>
   <p id="subtitle">arrastra · intercambia · fusiona</p>
 
-  <div class="toolbar">
-    <span id="active-user">usuario: -</span>
-    <select id="user-select"></select>
-    <button id="user-create-btn">+ usuario</button>
-    <button id="logout-btn">logout</button>
-    <select id="level-select"></select>
-    <select id="mode-select">
-      <option value="classic">classic</option>
-      <option value="timed">timed</option>
-      <option value="zen">zen</option>
-    </select>
-    <button id="mute-btn">sonido: on</button>
+  <div id="level-grid" class="level-grid"></div>
+
+  <div id="game-area" class="game-area hidden">
+    <button id="back-levels-btn" class="back-btn">← Niveles</button>
+    <div id="board-wrap">
+      <canvas id="grid-overlay"></canvas>
+      <div id="hover-overlay"></div>
+    </div>
+    <div id="status"></div>
+    <button id="shuffle-btn">mezclar</button>
   </div>
 
-  <div id="board-wrap">
-    <canvas id="grid-overlay"></canvas>
-    <div id="hover-overlay"></div>
-  </div>
-
-  <div id="status"></div>
-  <button id="shuffle-btn">mezclar</button>
   <canvas id="ghost"></canvas>
 
   <div id="win-overlay">
     <h2>¡Completado!</h2>
-    <button id="replay-btn">Jugar de nuevo</button>
+    <div class="win-actions">
+      <button id="replay-btn">Jugar de nuevo</button>
+      <button id="win-levels-btn">Niveles</button>
+    </div>
   </div>
 
   <script type="module" src="main.js"></script>

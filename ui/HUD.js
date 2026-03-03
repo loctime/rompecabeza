@@ -1,12 +1,9 @@
 export class HUD {
-  constructor({ statusEl, winEl, shuffleBtn, replayBtn, levelSelectEl, modeSelectEl, muteBtn }) {
+  constructor({ statusEl, winEl, shuffleBtn, replayBtn }) {
     this.statusEl = statusEl;
     this.winEl = winEl;
     this.shuffleBtn = shuffleBtn;
     this.replayBtn = replayBtn;
-    this.levelSelectEl = levelSelectEl;
-    this.modeSelectEl = modeSelectEl;
-    this.muteBtn = muteBtn;
   }
 
   update(snapshot) {
@@ -19,9 +16,4 @@ export class HUD {
 
   onShuffle(fn) { this.shuffleBtn.onclick = fn; }
   onReplay(fn) { this.replayBtn.onclick = fn; }
-  onLevelChange(fn) { this.levelSelectEl.onchange = () => fn(this.levelSelectEl.value); }
-  onModeChange(fn) { this.modeSelectEl.onchange = () => fn(this.modeSelectEl.value); }
-  onMute(fn) { this.muteBtn.onclick = fn; }
-
-  setMuteLabel(muted) { this.muteBtn.textContent = muted ? 'sonido: off' : 'sonido: on'; }
 }

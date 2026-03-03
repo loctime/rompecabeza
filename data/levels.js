@@ -1,42 +1,65 @@
-import { mountainNight } from '../levels/mountainNight.js';
+const BOARD_W = 480;
+const BOARD_H = 360;
 
-const dawnValley = {
-  id: 'dawn-valley',
-  meta: { title: 'Valle del Alba', difficulty: 2 },
-  board: { cols: 4, rows: 4, boardW: 400, boardH: 400 },
-  image: {
-    type: 'generator',
-    generate: async () => {
-      const cv = document.createElement('canvas');
-      cv.width = 400;
-      cv.height = 400;
-      const ctx = cv.getContext('2d');
-      const sky = ctx.createLinearGradient(0, 0, 0, 400);
-      sky.addColorStop(0, '#1f2b5e');
-      sky.addColorStop(1, '#e98b6d');
-      ctx.fillStyle = sky;
-      ctx.fillRect(0, 0, 400, 400);
-      ctx.fillStyle = 'rgba(255,255,255,0.4)';
-      for (let i = 0; i < 60; i++) ctx.fillRect(Math.random() * 400, Math.random() * 210, 2, 2);
-      ctx.fillStyle = '#243b55';
-      ctx.beginPath();
-      ctx.moveTo(0, 320); ctx.lineTo(100, 170); ctx.lineTo(220, 310); ctx.lineTo(340, 180); ctx.lineTo(400, 300); ctx.lineTo(400, 400); ctx.lineTo(0, 400); ctx.closePath();
-      ctx.fill();
-      return cv;
-    },
-  },
-};
-
-export const levels = [
-  {
-    id: mountainNight.id,
-    meta: { title: mountainNight.title, difficulty: 1 },
-    board: { cols: mountainNight.cols, rows: mountainNight.rows, boardW: mountainNight.boardW, boardH: mountainNight.boardH },
-    image: { type: 'generator', generate: mountainNight.generateImage.bind(mountainNight) },
-  },
-  dawnValley,
+// Títulos amigables para los 50 niveles (coinciden con las imágenes descargadas).
+const TITLES = [
+  'Montaña', 'Playa', 'Bosque', 'Desierto', 'Cascada',
+  'Lago', 'Atardecer', 'Cañón', 'Nieve', 'Valle',
+  'Río', 'Acantilado', 'Aurora', 'Pradera', 'Volcán',
+  'Selva', 'Tundra', 'Sabana', 'Isla', 'Niebla',
+  'León', 'Elefante', 'Águila', 'Lobo', 'Delfín',
+  'Tigre', 'Oso', 'Zorro', 'Pingüino', 'Ciervo',
+  'Ballena', 'Mariposa', 'Jirafa', 'Loro', 'Caballo',
+  'Guepardo', 'Flamenco', 'Tortuga', 'Koala', 'Búho',
+  'Cactus', 'Rosa', 'Bambú', 'Girasol', 'Helecho',
+  'Cerezo', 'Orquídea', 'Hongo', 'Lavanda', 'Loto',
 ];
+
+// Ciclo de tamaños de rejilla: vuelve a empezar cada 5 niveles.
+const GRID_PATTERNS = [
+  { cols: 3, rows: 4 }, // paso 0  → niveles 1,6,11,...
+  { cols: 4, rows: 4 }, // paso 1
+  { cols: 4, rows: 5 }, // paso 2
+  { cols: 5, rows: 5 }, // paso 3
+  { cols: 5, rows: 6 }, // paso 4
+];
+
+async function loadImageCanvas(path, width, height) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const cv = document.createElement('canvas');
+      cv.width = width;
+      cv.height = height;
+      const ctx = cv.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(cv);
+    };
+    img.onerror = (err) => reject(err || new Error(`No se pudo cargar la imagen ${path}`));
+    img.src = path;
+  });
+}
+
+export const levels = Array.from({ length: 50 }, (_, idx) => {
+  const n = idx + 1;
+  const pattern = GRID_PATTERNS[idx % GRID_PATTERNS.length];
+  const id = `nivel-${String(n).padStart(2, '0')}`;
+  const title = TITLES[idx] || `Nivel ${n}`;
+  const difficulty = (idx % GRID_PATTERNS.length) + 1; // 1..5
+  const imagePath = `./assets/levels/${id}.jpg`;
+
+  return {
+    id,
+    meta: { title, difficulty },
+    board: { cols: pattern.cols, rows: pattern.rows, boardW: BOARD_W, boardH: BOARD_H },
+    image: {
+      type: 'file',
+      generate: () => loadImageCanvas(imagePath, BOARD_W, BOARD_H),
+    },
+  };
+});
 
 export function getLevelById(id) {
   return levels.find((l) => l.id === id) || levels[0];
 }
+
