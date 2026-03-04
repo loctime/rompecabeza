@@ -69,7 +69,7 @@ export class BoardUI {
     this._gctx.clearRect(0, 0, this.boardW, this.boardH);
     if (this.hideBoardBorders) return;
     const fused = session.getFusedEdges();
-    this._gctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    this._gctx.strokeStyle = 'rgba(255,255,255,0.2)';
     this._gctx.lineWidth = 1;
     for (let c = 1; c < this.cols; c++) {
       for (let r = 0; r < this.rows; r++) {

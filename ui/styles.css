@@ -36,19 +36,21 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 16px;
-  padding: 12px;
-  padding-left: max(12px, env(safe-area-inset-left));
-  padding-right: max(12px, env(safe-area-inset-right));
-  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  padding: 8px;
+  padding-top: 4px;
+  padding-left: max(8px, env(safe-area-inset-left));
+  padding-right: max(8px, env(safe-area-inset-right));
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
   overflow-x: hidden;
 }
 
 /* En juego queremos el tablero más arriba y con más alto útil */
 body[data-view="game"] {
   justify-content: flex-start;
-  gap: 10px;
+  gap: 0;
+  padding: max(2px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
 }
 
 body[data-view="game"] h1,
@@ -62,6 +64,7 @@ h1 {
   color: var(--gold);
   letter-spacing: 0.05em;
   font-weight: 400;
+  margin-bottom: 8px;
 }
 
 #subtitle {
@@ -78,8 +81,8 @@ h1 {
 /* ── Grilla de niveles (mobile first) ── */
 .level-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
   width: 100%;
   max-width: 100%;
   max-height: 70vh;
@@ -103,6 +106,37 @@ h1 {
   padding: 0;
   overflow: hidden;
   transition: border-color 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+
+.level-card.revealed img {
+  opacity: 1;
+}
+
+.level-card:not(.revealed) img {
+  opacity: 0;
+}
+
+.level-card:not(.revealed)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--gold-dim) 0%, var(--bg) 100%);
+  border: 1px solid var(--gold);
+  border-radius: 2px;
+}
+
+.level-card:not(.revealed)::after {
+  content: attr(data-level-num);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.5rem;
+  color: var(--gold);
+  font-family: 'Playfair Display', serif;
+  font-weight: bold;
+  opacity: 0.9;
 }
 
 .level-card:hover {
@@ -112,9 +146,10 @@ h1 {
 
 .level-card img {
   width: 100%;
-  aspect-ratio: 9 / 16;
+  aspect-ratio: 1 / 1;
   object-fit: cover;
   display: block;
+  transition: opacity 0.3s ease;
 }
 
 .level-card .level-num {
@@ -143,21 +178,22 @@ h1 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  justify-content: flex-start;
+  gap: 0;
   width: 100%;
   max-width: 100%;
-  flex: 1;
-  min-height: 0;
+  flex: 0 0 auto;
   overflow-x: hidden;
 }
 
 #board-container {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: flex-start;
+  align-items: flex-start;
   width: 100%;
   max-width: 100%;
-  flex: 1;
+  flex: 0 0 auto;
+  min-width: 0;
   min-height: 0;
   overflow: hidden;
 }
@@ -170,6 +206,7 @@ h1 {
   font-family: 'DM Mono', monospace;
   font-size: 0.65rem;
   padding: 6px 12px;
+  margin: 0 0 4px 0;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -181,7 +218,7 @@ h1 {
   position: relative;
   flex-shrink: 0;
   touch-action: none;
-  transform-origin: center center;
+  transform-origin: top left;
 }
 
 #grid-overlay {
@@ -286,10 +323,14 @@ body[data-hide-board-borders="true"] #ghost {
 
 /* ── Tablet/desktop: más espacio y columnas ── */
 @media (min-width: 480px) {
-  body { padding: 20px; gap: 24px; }
+  body { 
+    padding: 16px; 
+    padding-top: 8px;
+    gap: 20px; 
+  }
   .level-grid {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
     max-width: 720px;
     padding: 8px;
   }

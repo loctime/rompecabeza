@@ -57,8 +57,8 @@ function teardown() {
 function applyBoardScale(boardW, boardH) {
   if (!boardContainerEl || !boardWrapEl) return;
   const padding = 24;
-  // En juego ocultamos/compactamos el header, así que reservamos menos alto.
-  const headerGap = document.body.dataset.view === 'game' ? 24 : 80;
+  // En juego el tablero va justo bajo el botón Niveles, reservamos solo ese botón.
+  const headerGap = document.body.dataset.view === 'game' ? 8 : 80;
   const availW = Math.min(document.documentElement.clientWidth, window.innerWidth) - padding;
   const availH = Math.min(document.documentElement.clientHeight, window.innerHeight) - headerGap - padding;
   const scale = Math.min(1, availW / boardW, availH / boardH);
@@ -99,7 +99,7 @@ async function boot(levelId) {
     boardH: level.board.boardH,
     cols: level.board.cols,
     rows: level.board.rows,
-    hideBoardBorders: store.state.settings.hideBoardBorders !== false,
+    hideBoardBorders: store.state.settings.hideBoardBorders !== true,
   });
   boardUI.setPieceCanvases(pieceCanvases);
   setupBoardScale(level);
@@ -129,6 +129,10 @@ async function boot(levelId) {
       bestScore: Math.max(store.state.progress[payload.levelId]?.bestScore || 0, payload.score),
       solved: payload.reason === 'win',
     });
+    // Refresh level grid to show newly completed levels
+    if (document.body.dataset.view === 'levels') {
+      renderLevelGrid();
+    }
   }));
 
   session.start();
@@ -143,7 +147,17 @@ function renderLevelGrid() {
     card.type = 'button';
     card.className = 'level-card';
     card.dataset.levelId = level.id;
+    
+    // Set level number for face-down cards
     const num = level.id.replace('nivel-', '');
+    card.dataset.levelNum = num;
+    
+    // Check if level is completed
+    const isCompleted = store.state.progress[level.id]?.solved;
+    if (isCompleted) {
+      card.classList.add('revealed');
+    }
+    
     const stars = '★'.repeat(level.meta.difficulty);
     card.innerHTML = `
       <img src="./assets/levels/${level.id}.jpg" alt="" loading="lazy" />
@@ -160,18 +174,20 @@ async function init() {
   store.setUser('default');
   await store.hydrate();
   document.body.dataset.view = 'levels';
-  document.body.dataset.hideBoardBorders = store.state.settings.hideBoardBorders !== false ? 'true' : 'false';
+  document.body.dataset.hideBoardBorders = store.state.settings.hideBoardBorders !== true ? 'false' : 'true';
   renderLevelGrid();
 
   document.getElementById('back-levels-btn').addEventListener('click', () => {
     teardown();
     hud?.hideWin();
+    renderLevelGrid(); // Refresh to show completed status
     showLevelGrid();
   });
 
   document.getElementById('win-levels-btn').addEventListener('click', () => {
     hud?.hideWin();
     teardown();
+    renderLevelGrid(); // Refresh to show completed status
     showLevelGrid();
   });
 }
