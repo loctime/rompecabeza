@@ -145,6 +145,7 @@ function setupBoardScale(level) {
 async function boot(level) {
   if (!level) return;
   teardown();
+  showGame();
   const image = await assetManager.preload(level) || await assetManager.restore(level.id) || await level.image.generate();
   const sliced = assetManager.buildPieces(image, level.board.cols, level.board.rows);
   pieceCanvases = sliced.pieces.map((p) => p.canvas);
@@ -153,11 +154,21 @@ async function boot(level) {
   await session.restoreProgress();
 
   document.body.dataset.hideBoardBorders = store.state.settings.hideBoardBorders ? 'true' : 'false';
+
+  const wrapEl = document.getElementById('board-wrap');
+  const gridOverlayEl = document.getElementById('grid-overlay') || (wrapEl && wrapEl.querySelector('canvas'));
+  const hoverEl = document.getElementById('hover-overlay');
+  const ghostEl = document.getElementById('ghost');
+  if (!wrapEl || !gridOverlayEl) {
+    console.error('BoardUI: board-wrap o grid-overlay no encontrados');
+    return;
+  }
+
   boardUI = new BoardUI({
-    wrapEl: boardWrapEl,
-    ghostEl: document.getElementById('ghost'),
-    hoverEl: document.getElementById('hover-overlay'),
-    gridOverlayEl: document.getElementById('grid-overlay'),
+    wrapEl,
+    ghostEl: ghostEl,
+    hoverEl: hoverEl,
+    gridOverlayEl,
     boardW: level.board.boardW,
     boardH: level.board.boardH,
     cols: level.board.cols,
@@ -254,7 +265,6 @@ async function boot(level) {
   session.start();
   currentLevel = level;
   currentLevelId = level.id;
-  showGame();
 }
 
 async function startDaily() {

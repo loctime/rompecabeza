@@ -274,9 +274,12 @@ export class BoardUI {
     this._gctx.clearRect(0, 0, this.boardW, this.boardH);
     if (this.hideBoardBorders) return;
     const fused = session.getFusedEdges();
+    const { cols, rows, total } = session.state;
+
+    // 1) Líneas finas entre celdas no fusionadas (con margen para que no se toquen)
+    const sepInset = 2;
     this._gctx.strokeStyle = '#000';
     this._gctx.lineWidth = 1;
-    // Líneas verticales entre celdas no fusionadas (solo entre bloques no fusionados)
     for (let c = 1; c < this.cols; c++) {
       for (let r = 0; r < this.rows; r++) {
         const posL = r * this.cols + (c - 1);
@@ -285,13 +288,16 @@ export class BoardUI {
         const x = Math.round(c * this.cellW) + 0.5;
         const y0 = Math.floor(r * this.cellH);
         const y1 = Math.ceil((r + 1) * this.cellH);
-        this._gctx.beginPath();
-        this._gctx.moveTo(x, y0);
-        this._gctx.lineTo(x, y1);
-        this._gctx.stroke();
+        const ya = y0 + sepInset;
+        const yb = y1 - sepInset;
+        if (ya < yb) {
+          this._gctx.beginPath();
+          this._gctx.moveTo(x, ya);
+          this._gctx.lineTo(x, yb);
+          this._gctx.stroke();
+        }
       }
     }
-    // Líneas horizontales entre celdas no fusionadas (evitar subpíxel en primera fila)
     for (let r = 1; r < this.rows; r++) {
       for (let c = 0; c < this.cols; c++) {
         const posT = (r - 1) * this.cols + c;
@@ -300,10 +306,61 @@ export class BoardUI {
         const y = Math.round(r * this.cellH) + 0.5;
         const x0 = Math.floor(c * this.cellW);
         const x1 = Math.ceil((c + 1) * this.cellW);
-        this._gctx.beginPath();
-        this._gctx.moveTo(x0, y);
-        this._gctx.lineTo(x1, y);
-        this._gctx.stroke();
+        const xa = x0 + sepInset;
+        const xb = x1 - sepInset;
+        if (xa < xb) {
+          this._gctx.beginPath();
+          this._gctx.moveTo(xa, y);
+          this._gctx.lineTo(xb, y);
+          this._gctx.stroke();
+        }
+      }
+    }
+
+    // 2) Contorno grueso para cada bloque fusionado (2+ celdas)
+    const seen = new Set();
+    const groups = [];
+    for (let pos = 0; pos < total; pos++) {
+      if (seen.has(pos)) continue;
+      const group = session.getGroup(pos, fused);
+      group.forEach((p) => seen.add(p));
+      if (group.length >= 2) groups.push(group);
+    }
+    this._gctx.strokeStyle = '#c9a84c';
+    this._gctx.lineWidth = 3;
+    for (const group of groups) {
+      const set = new Set(group);
+      for (const pos of group) {
+        const r = Math.floor(pos / cols);
+        const c = pos % cols;
+        const x0 = c * this.cellW;
+        const y0 = r * this.cellH;
+        const x1 = (c + 1) * this.cellW;
+        const y1 = (r + 1) * this.cellH;
+        if (c === 0 || !set.has(pos - 1)) {
+          this._gctx.beginPath();
+          this._gctx.moveTo(x0, y0);
+          this._gctx.lineTo(x0, y1);
+          this._gctx.stroke();
+        }
+        if (c === cols - 1 || !set.has(pos + 1)) {
+          this._gctx.beginPath();
+          this._gctx.moveTo(x1, y0);
+          this._gctx.lineTo(x1, y1);
+          this._gctx.stroke();
+        }
+        if (r === 0 || !set.has(pos - cols)) {
+          this._gctx.beginPath();
+          this._gctx.moveTo(x0, y0);
+          this._gctx.lineTo(x1, y0);
+          this._gctx.stroke();
+        }
+        if (r === rows - 1 || !set.has(pos + cols)) {
+          this._gctx.beginPath();
+          this._gctx.moveTo(x0, y1);
+          this._gctx.lineTo(x1, y1);
+          this._gctx.stroke();
+        }
       }
     }
   }
