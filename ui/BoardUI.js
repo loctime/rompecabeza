@@ -2,9 +2,12 @@
 const SNAP_DURATION_MS = 180;
 const BOUNCE_DURATION_MS = 120;
 const ALIGN_DURATION_MS = 80;
+const FREEZE_BEFORE_CAMERA_MS = 600; // Plan Maestro: "freeze 0.6s" antes del zoom
 const CAMERA_DURATION_MS = 2800;
 const CAMERA_ZOOM = 1.04;
 const DRIFT_OFFSET_PX = 3;
+const PARTICLE_DURATION_MS = 1200; // Extras punto 9: partículas suaves tras zoom
+const PARTICLE_COUNT = 24;
 
 function easeOutCubic(t) { return 1 - (1 - t) ** 3; }
 function easeInOutCubic(t) { return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2; }
@@ -49,7 +52,11 @@ export class BoardUI {
         this._step1SnapBounce(positions, () => {
           this._step2AlignAll(() => {
             this._step3HideGrid(() => {
-              this._step4Camera(resolve);
+              this._stepFreeze(() => {
+                this._step4Camera(() => {
+                  this._stepParticles(resolve);
+                });
+              });
             });
           });
         });
@@ -123,6 +130,11 @@ export class BoardUI {
     setTimeout(done, 50);
   }
 
+  /** Freeze breve (Plan Maestro / Extras: imagen visible antes del zoom). Ajustar en FREEZE_BEFORE_CAMERA_MS. */
+  _stepFreeze(done) {
+    setTimeout(done, FREEZE_BEFORE_CAMERA_MS);
+  }
+
   _step4Camera(done) {
     const start = performance.now();
     const wrap = this.wrapEl;
@@ -141,6 +153,54 @@ export class BoardUI {
       wrap.style.transform = `scale(${scale})`;
       if (t < 1) requestAnimationFrame(tick);
       else done();
+    };
+    requestAnimationFrame(tick);
+  }
+
+  /** Partículas suaves tras el zoom (Extras punto 9). Ajustar PARTICLE_DURATION_MS y PARTICLE_COUNT. */
+  _stepParticles(done) {
+    const container = this.wrapEl?.parentElement;
+    if (!container) {
+      done();
+      return;
+    }
+    const w = this.boardW;
+    const h = this.boardH;
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    canvas.style.cssText = `position:absolute;left:0;top:0;width:${w}px;height:${h}px;pointer-events:none;z-index:12;`;
+    container.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+    const cx = w / 2;
+    const cy = h / 2;
+    const particles = Array.from({ length: PARTICLE_COUNT }, () => ({
+      angle: (Math.PI * 2 * Math.random()),
+      dist: 0,
+      maxDist: 20 + Math.random() * 60,
+      size: 1.5 + Math.random() * 2,
+      opacity: 0.4 + Math.random() * 0.5,
+    }));
+    const start = performance.now();
+    const tick = () => {
+      const elapsed = performance.now() - start;
+      const t = Math.min(1, elapsed / PARTICLE_DURATION_MS);
+      ctx.clearRect(0, 0, w, h);
+      particles.forEach((p) => {
+        const dist = p.maxDist * easeOutCubic(t);
+        const x = cx + Math.cos(p.angle) * dist;
+        const y = cy + Math.sin(p.angle) * dist;
+        const opacity = p.opacity * (1 - t);
+        ctx.fillStyle = `rgba(201, 168, 76, ${opacity})`;
+        ctx.beginPath();
+        ctx.arc(x, y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      if (t < 1) requestAnimationFrame(tick);
+      else {
+        canvas.remove();
+        done();
+      }
     };
     requestAnimationFrame(tick);
   }

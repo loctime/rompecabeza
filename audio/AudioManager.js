@@ -22,6 +22,7 @@ export class AudioManager {
       move: (ctx) => this._synthMove(ctx),
       fuse: (ctx) => this._synthFuse(ctx),
       win:  (ctx) => this._synthWin(ctx),
+      invalid: (ctx) => this._synthInvalid(ctx),
     };
   }
 
@@ -29,7 +30,7 @@ export class AudioManager {
 
   /**
    * Play a named sound.
-   * @param {'move'|'fuse'|'win'} name
+   * @param {'move'|'fuse'|'win'|'invalid'} name
    */
   play(name) {
     if (this._muted) return;
@@ -91,6 +92,22 @@ export class AudioManager {
   }
 
   // ── Private: synth helpers ──────────────────────────────────────────────────
+
+  /** Sonido cuando el movimiento no es válido (Plan Maestro FASE 2: INVALID). */
+  _synthInvalid(ctx) {
+    const t0 = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(180, t0);
+    osc.frequency.exponentialRampToValueAtTime(120, t0 + 0.06);
+    gain.gain.setValueAtTime(0.08, t0);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.1);
+    osc.start(t0);
+    osc.stop(t0 + 0.1);
+  }
 
   /** Short soft click for piece swap */
   _synthMove(ctx) {

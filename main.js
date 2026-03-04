@@ -166,6 +166,7 @@ async function boot(levelId) {
   unsubscribers.push(bus.on(EVENTS.PIECE_PLACED, (payload) => {
     lastPiecePlacedInfo = payload;
   }));
+  unsubscribers.push(bus.on(EVENTS.MOVE_REJECTED, () => audio.play('invalid')));
   unsubscribers.push(bus.on(EVENTS.MOVE_APPLIED, ({ affected }) => {
     boardUI.render(session, pieceCanvases, affected);
     hud.update(session.getSnapshot());

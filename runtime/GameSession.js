@@ -50,7 +50,10 @@ export class GameSession {
 
   applyMove(originPos, destCol, destRow) {
     const result = PuzzleEngine.applyMove(this.state, originPos, destCol, destRow);
-    if (!result.moved) return result;
+    if (!result.moved) {
+      this.bus.emit(EVENTS.MOVE_REJECTED, this.getSnapshot());
+      return result;
+    }
     this.state = result.state;
     this.score += result.fusionGained ? 25 : 5;
     const placed = (result.placed || []).map(({ pieceId, fromPos, toPos }) => ({
