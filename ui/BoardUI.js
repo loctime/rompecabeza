@@ -143,5 +143,5 @@ export class BoardUI {
   endGhost() { this.ghostEl.style.display = 'none'; }
   showHover(positions, session) { if (!positions.length) return this.clearHover(); const rs = positions.map((p) => Math.floor(p / session.state.cols)); const cs = positions.map((p) => p % session.state.cols); const minR = Math.min(...rs), minC = Math.min(...cs), maxR = Math.max(...rs), maxC = Math.max(...cs); const borderCss = this.hideBoardBorders ? 'border:none;box-shadow:none;' : 'border:2px solid rgba(255,255,255,0.4);box-shadow:inset 0 0 16px rgba(255,255,255,0.06);'; this.hoverEl.style.cssText = `display:block;position:absolute;left:${minC * this.cellW}px;top:${minR * this.cellH}px;width:${(maxC - minC + 1) * this.cellW}px;height:${(maxR - minR + 1) * this.cellH}px;pointer-events:none;z-index:11;${borderCss}`; }
   clearHover() { this.hoverEl.style.display = 'none'; }
-  dimGroup(group, dim) { group.forEach((p) => { const el = this._cellEls[p]; if (el) el.style.opacity = dim ? '0.25' : ''; }); }
+  dimGroup(group, dim) { group.forEach((p) => { const el = this._cellEls[p]; if (el) el.style.opacity = dim ? '0' : ''; }); }
 }
