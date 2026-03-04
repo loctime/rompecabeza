@@ -36,22 +36,33 @@ let completionAAAStarted = false;
 const CLASSIC_PACK_ID = 'clasico';
 const CLASSIC_LEVEL_COUNT = 50;
 
+/** 'daily' | 'classic' | 'infinite' */
+let currentMode = 'classic';
+
 const levelGridEl = document.getElementById('level-grid');
 const gameAreaEl = document.getElementById('game-area');
 const boardContainerEl = document.getElementById('board-container');
 const boardWrapEl = document.getElementById('board-wrap');
+const backGameBtn = document.getElementById('back-levels-btn');
+
+function showHome() {
+  document.body.dataset.view = 'home';
+  currentLevelId = null;
+  currentLevel = null;
+}
 
 function showLevelGrid() {
   document.body.dataset.view = 'levels';
-  levelGridEl.classList.remove('hidden');
-  gameAreaEl.classList.add('hidden');
+  currentMode = 'classic';
   currentLevelId = null;
+  if (backGameBtn) backGameBtn.textContent = '← Atrás';
 }
 
 function showGame() {
   document.body.dataset.view = 'game';
-  levelGridEl.classList.add('hidden');
-  gameAreaEl.classList.remove('hidden');
+  if (backGameBtn) {
+    backGameBtn.textContent = currentMode === 'classic' ? '← Niveles' : '← Inicio';
+  }
 }
 
 function teardown() {
@@ -195,14 +206,28 @@ async function boot(level) {
     for (let i = 0; i < Math.min(3, lastIds.length); i++) {
       setTimeout(() => audio.playSnapTick(0.5 + (i + 1) * 0.15), 80 + i * 60);
     }
-    const nextLevel = getNextLevelForClassic();
+    const nextLevelClassic = currentMode === 'classic' ? getNextLevelForClassic() : null;
+    const hasNextLevel = currentMode === 'infinite' ? true : !!nextLevelClassic;
+    const onNextLevel = currentMode === 'infinite'
+      ? () => levelManager.nextInfiniteLevel(CLASSIC_PACK_ID).then((next) => transitionToLevel(next))
+      : () => transitionToLevel(nextLevelClassic);
+
     boardUI.playCompletionAAA(stats, { lastPlacedPositions: lastPositions, lastPlacedPieceIds: lastIds })
       .then(() => {
         hud.showCompletionBanner(stats, {
-          hasNextLevel: !!nextLevel,
-          onNextLevel: () => transitionToLevel(nextLevel),
+          hasNextLevel,
+          onNextLevel,
           onReplay: () => { hud.hideWin(); boot(currentLevel); },
-          onLevels: () => { hud.hideWin(); teardown(); renderLevelGrid(); showLevelGrid(); },
+          onLevels: () => {
+            hud.hideWin();
+            teardown();
+            if (currentMode === 'classic') {
+              renderLevelGrid();
+              showLevelGrid();
+            } else {
+              showHome();
+            }
+          },
           onDownload: () => {
             const url = boardUI.exportSolvedImage();
             if (url) {
@@ -230,6 +255,18 @@ async function boot(level) {
   currentLevel = level;
   currentLevelId = level.id;
   showGame();
+}
+
+async function startDaily() {
+  currentMode = 'daily';
+  const level = levelManager.getDailyLevel(CLASSIC_PACK_ID);
+  if (level) await boot(level);
+}
+
+async function startInfinite() {
+  currentMode = 'infinite';
+  const level = await levelManager.nextInfiniteLevel(CLASSIC_PACK_ID);
+  if (level) await boot(level);
 }
 
 function renderLevelGrid() {
@@ -270,22 +307,27 @@ async function init() {
   store.setUser('default');
   await store.hydrate();
   await levelManager.init();
-  document.body.dataset.view = 'levels';
+  document.body.dataset.view = 'home';
   document.body.dataset.hideBoardBorders = store.state.settings.hideBoardBorders !== true ? 'false' : 'true';
-  renderLevelGrid();
+
+  document.getElementById('mode-daily').addEventListener('click', () => startDaily());
+  document.getElementById('mode-clasico').addEventListener('click', () => {
+    renderLevelGrid();
+    showLevelGrid();
+  });
+  document.getElementById('mode-infinito').addEventListener('click', () => startInfinite());
+
+  document.getElementById('back-home-btn').addEventListener('click', () => showHome());
 
   document.getElementById('back-levels-btn').addEventListener('click', () => {
     teardown();
     hud?.hideWin();
-    renderLevelGrid(); // Refresh to show completed status
-    showLevelGrid();
-  });
-
-  document.getElementById('win-levels-btn').addEventListener('click', () => {
-    hud?.hideWin();
-    teardown();
-    renderLevelGrid(); // Refresh to show completed status
-    showLevelGrid();
+    if (currentMode === 'classic') {
+      renderLevelGrid();
+      showLevelGrid();
+    } else {
+      showHome();
+    }
   });
 }
 

@@ -1,11 +1,11 @@
 /**
  * ui/styles.css
- * Global styles for the puzzle platform.
- * Fuentes: Google Fonts (Playfair Display, DM Mono).
- * Para PWA offline: descarga los .woff2 y ponlos en /fonts/ (ver fonts/README.md).
+ * Rompecoco — Puzzle. Estilos globales.
+ * Fuentes: Playfair Display, DM Mono (Google Fonts).
  */
 
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400&family=Playfair+Display:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500&family=Playfair+Display:ital,wght@0,400;0,600;0,700&display=swap');
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html {
@@ -21,10 +21,14 @@ html, body {
 
 :root {
   --bg:       #0f0e0c;
+  --bg-card:  #161410;
   --gold:     #c9a84c;
   --gold-dim: #7a5f28;
+  --gold-soft: rgba(201, 168, 76, 0.15);
   --text:     #e8e0d0;
   --text-dim: #7a7060;
+  --radius:   12px;
+  --radius-sm: 8px;
 }
 
 body {
@@ -37,59 +41,172 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 16px;
-  padding: 8px;
-  padding-top: 4px;
-  padding-left: max(8px, env(safe-area-inset-left));
-  padding-right: max(8px, env(safe-area-inset-right));
-  padding-bottom: max(8px, env(safe-area-inset-bottom));
+  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
   overflow-x: hidden;
-}
-
-/* En juego queremos el tablero más arriba y con más alto útil */
-body[data-view="game"] {
-  justify-content: flex-start;
-  gap: 0;
-  padding: max(2px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
-}
-
-body[data-view="game"] h1,
-body[data-view="game"] #subtitle {
-  display: none;
-}
-
-h1 {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.6rem;
-  color: var(--gold);
-  letter-spacing: 0.05em;
-  font-weight: 400;
-  margin-bottom: 8px;
-}
-
-#subtitle {
-  font-size: 0.65rem;
-  color: var(--text-dim);
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  margin-top: -18px;
-  text-align: center;
 }
 
 .hidden { display: none !important; }
 
-/* ── Grilla de niveles (mobile first) ── */
+/* ── Vista: qué sección mostrar (por defecto solo home visible) ── */
+.view-section {
+  display: none;
+}
+body[data-view="home"] .view-section[data-view-section="home"],
+body[data-view="levels"] .view-section[data-view-section="levels"],
+body[data-view="game"] .view-section[data-view-section="game"] {
+  display: flex !important;
+}
+
+.view-section {
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 100%;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Header (oculto en juego) ── */
+.app-header {
+  text-align: center;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+body[data-view="game"] .app-header {
+  display: none;
+}
+
+.app-title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.75rem, 6vw, 2.25rem);
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 0.02em;
+  margin-bottom: 2px;
+}
+
+.app-tagline {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* ── Home: tarjetas de modo ── */
+.home-view {
+  justify-content: flex-start;
+  padding-top: 24px;
+  gap: 20px;
+}
+
+.mode-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 340px;
+}
+
+.mode-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  padding: 20px 20px 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s ease;
+}
+.mode-card:hover {
+  border-color: var(--gold);
+  box-shadow: 0 0 24px var(--gold-soft);
+  transform: translateY(-1px);
+}
+.mode-card:active {
+  transform: translateY(0);
+}
+
+.mode-card__icon {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  color: var(--gold);
+  margin-bottom: 10px;
+  line-height: 1;
+}
+
+.mode-card__title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 0.03em;
+  margin-bottom: 4px;
+}
+
+.mode-card__desc {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
+.mode-card--daily { border-left: 3px solid var(--gold); }
+.mode-card--clasico { border-left: 3px solid #8b7355; }
+.mode-card--infinito { border-left: 3px solid #6b5b4f; }
+
+/* ── Niveles (modo clásico) ── */
+.levels-view {
+  padding-top: 8px;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.nav-btn {
+  align-self: flex-start;
+  background: transparent;
+  border: 1px solid var(--gold-dim);
+  color: var(--text-dim);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.nav-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.nav-btn--game {
+  margin-bottom: 4px;
+}
+
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: var(--text-dim);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
 .level-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
+  gap: 10px;
   width: 100%;
   max-width: 100%;
-  max-height: 70vh;
-  max-height: 70dvh;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 4px;
+  padding: 4px 0;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -97,10 +214,10 @@ h1 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: rgba(26, 24, 20, 0.9);
+  background: var(--bg-card);
   border: 1px solid var(--gold-dim);
+  border-radius: var(--radius-sm);
   color: var(--text);
-  font-family: 'DM Mono', monospace;
   font-size: 0.7rem;
   cursor: pointer;
   padding: 0;
@@ -109,21 +226,15 @@ h1 {
   position: relative;
 }
 
-.level-card.revealed img {
-  opacity: 1;
-}
-
-.level-card:not(.revealed) img {
-  opacity: 0;
-}
+.level-card.revealed img { opacity: 1; }
+.level-card:not(.revealed) img { opacity: 0; }
 
 .level-card:not(.revealed)::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, var(--gold-dim) 0%, var(--bg) 100%);
-  border: 1px solid var(--gold);
-  border-radius: 2px;
+  background: linear-gradient(145deg, var(--gold-dim) 0%, var(--bg) 60%);
+  border-radius: inherit;
 }
 
 .level-card:not(.revealed)::after {
@@ -132,21 +243,21 @@ h1 {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   color: var(--gold);
   font-family: 'Playfair Display', serif;
-  font-weight: bold;
-  opacity: 0.9;
+  font-weight: 700;
+  opacity: 0.95;
 }
 
 .level-card:hover {
   border-color: var(--gold);
-  box-shadow: 0 0 20px rgba(201, 168, 76, 0.2);
+  box-shadow: 0 0 16px var(--gold-soft);
 }
 
 .level-card img {
   width: 100%;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 1;
   object-fit: cover;
   display: block;
   transition: opacity 0.3s ease;
@@ -173,8 +284,12 @@ h1 {
   padding-bottom: 6px;
 }
 
-/* ── Área de juego (mobile first) ── */
-.game-area {
+/* ── Área de juego ── */
+body[data-view="game"] {
+  padding: max(6px, env(safe-area-inset-top)) 12px 12px 12px;
+}
+
+.game-view {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -198,22 +313,6 @@ h1 {
   overflow: hidden;
 }
 
-.back-btn {
-  align-self: flex-start;
-  background: transparent;
-  border: 1px solid var(--gold-dim);
-  color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
-  font-size: 0.65rem;
-  padding: 6px 12px;
-  margin: 0 0 4px 0;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.back-btn:hover { border-color: var(--gold); color: var(--gold); }
-
-/* ── Board (touch-action solo aquí para no bloquear scroll/gestos del resto) ── */
 #board-wrap {
   position: relative;
   flex-shrink: 0;
@@ -235,7 +334,36 @@ h1 {
   z-index: 11;
 }
 
-/* ── Ghost ── */
+.game-status {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  height: 18px;
+  text-align: center;
+  margin-top: 4px;
+}
+
+.shuffle-btn {
+  background: transparent;
+  border: 1px solid var(--gold-dim);
+  color: var(--text-dim);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 10px 22px;
+  border-radius: var(--radius-sm);
+  margin-top: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.shuffle-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ── Ghost (pieza arrastrada) ── */
 #ghost {
   position: fixed;
   pointer-events: none;
@@ -250,100 +378,73 @@ body[data-hide-board-borders="true"] #ghost {
   box-shadow: 0 8px 40px rgba(0,0,0,0.7);
 }
 
-/* ── HUD ── */
-#status {
-  font-size: 0.65rem;
-  color: var(--text-dim);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  height: 16px;
-  text-align: center;
-}
-
-#shuffle-btn {
-  background: transparent;
-  border: 1px solid var(--gold-dim);
-  color: var(--text-dim);
-  font-family: 'DM Mono', monospace;
-  font-size: 0.65rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  padding: 8px 20px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-#shuffle-btn:hover { border-color: var(--gold); color: var(--gold); }
-
 /* ── Win overlay ── */
-#win-overlay {
+.win-overlay {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(15,14,12,0.93);
+  background: rgba(15,14,12,0.96);
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
   z-index: 100;
   pointer-events: none;
 }
-#win-overlay.show {
+.win-overlay.show {
   display: flex;
   pointer-events: auto;
 }
 
-#win-overlay h2 {
+.win-overlay__title {
   font-family: 'Playfair Display', serif;
-  font-size: clamp(1.5rem, 8vw, 2.5rem);
+  font-size: clamp(1.6rem, 8vw, 2.6rem);
+  font-weight: 600;
   color: var(--gold);
-  animation: glow 2s ease-in-out infinite alternate;
   text-align: center;
+  animation: glow 2s ease-in-out infinite alternate;
 }
 
 @keyframes glow {
   from { text-shadow: 0 0 20px rgba(201,168,76,0.5); }
-  to   { text-shadow: 0 0 60px rgba(201,168,76,1), 0 0 100px rgba(201,168,76,0.4); }
+  to   { text-shadow: 0 0 50px rgba(201,168,76,0.9), 0 0 80px rgba(201,168,76,0.3); }
 }
 
-#win-overlay button {
-  background: transparent;
-  border: 1px solid var(--gold-dim);
-  color: var(--gold);
-  font-family: 'DM Mono', monospace;
+.win-overlay__stats {
   font-size: 0.75rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  padding: 10px 24px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-#win-overlay button:hover { background: var(--gold); color: var(--bg); }
-
-#win-overlay .win-stats {
-  font-size: 0.7rem;
   color: var(--text-dim);
   letter-spacing: 0.1em;
   text-align: center;
-  margin: -8px 0 8px;
+  margin: -4px 0 4px;
 }
 
-#win-overlay .win-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.win-overlay__actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
 
-#win-overlay .win-cta {
+.win-cta {
   background: transparent;
   border: 1px solid var(--gold-dim);
   color: var(--gold);
   font-family: 'DM Mono', monospace;
   font-size: 0.75rem;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
-  padding: 10px 24px;
+  padding: 12px 22px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
 }
-#win-overlay .win-cta:hover { background: var(--gold); color: var(--bg); }
+.win-cta:hover {
+  background: var(--gold);
+  color: var(--bg);
+  border-color: var(--gold);
+}
 
-/* ── Transición a siguiente nivel (fade a negro). Ajustar duración en transition property. ── */
+/* ── Transición (fade negro) ── */
 .transition-overlay {
   position: fixed;
   inset: 0;
@@ -357,17 +458,30 @@ body[data-hide-board-borders="true"] #ghost {
   pointer-events: auto;
 }
 
-/* ── Tablet/desktop: más espacio y columnas ── */
+/* ── IDs legacy (HUD/main.js los referencian) ── */
+#status { }
+#win-overlay .win-stats { }
+#win-overlay h2 { display: none; }
+#win-overlay #win-title { display: block; }
+
+/* ── Tablet/desktop ── */
 @media (min-width: 480px) {
-  body { 
-    padding: 16px; 
-    padding-top: 8px;
-    gap: 20px; 
-  }
+  .mode-cards { max-width: 380px; }
   .level-grid {
     grid-template-columns: repeat(5, 1fr);
-    gap: 10px;
+    gap: 12px;
     max-width: 720px;
-    padding: 8px;
   }
+}
+
+@media (min-width: 600px) {
+  .mode-cards {
+    max-width: 420px;
+    gap: 18px;
+  }
+  .mode-card {
+    padding: 24px 24px 20px;
+  }
+  .mode-card__icon { font-size: 1.75rem; }
+  .mode-card__title { font-size: 1.25rem; }
 }
