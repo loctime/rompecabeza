@@ -148,22 +148,22 @@ export class AudioManager {
     });
   }
 
-  /** Chime suave + subgrave para secuencia AAA (más breve que win). */
+  /** Chime suave y acogedor para victoria (no brusco, sensación de recompensa). */
   _synthVictoryChime(ctx) {
     const t0 = ctx.currentTime;
-    const freqs = [523.25, 659.25, 783.99];
+    const freqs = [523.25, 659.25, 783.99]; // C5, E5, G5 — acorde mayor suave
     freqs.forEach((freq, i) => {
-      const osc  = ctx.createOscillator();
+      const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, t0 + i * 0.04);
-      gain.gain.setValueAtTime(0, t0 + i * 0.04);
-      gain.gain.linearRampToValueAtTime(0.12, t0 + i * 0.04 + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, t0 + i * 0.04 + 0.35);
-      osc.start(t0 + i * 0.04);
-      osc.stop(t0 + i * 0.04 + 0.35);
+      osc.frequency.setValueAtTime(freq, t0 + i * 0.06);
+      gain.gain.setValueAtTime(0, t0 + i * 0.06);
+      gain.gain.linearRampToValueAtTime(0.06, t0 + i * 0.06 + 0.06);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + i * 0.06 + 0.5);
+      osc.start(t0 + i * 0.06);
+      osc.stop(t0 + i * 0.06 + 0.5);
     });
     const sub = ctx.createOscillator();
     const subGain = ctx.createGain();
@@ -172,13 +172,13 @@ export class AudioManager {
     sub.type = 'sine';
     sub.frequency.setValueAtTime(130.81, t0);
     subGain.gain.setValueAtTime(0, t0);
-    subGain.gain.linearRampToValueAtTime(0.06, t0 + 0.05);
-    subGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.4);
+    subGain.gain.linearRampToValueAtTime(0.03, t0 + 0.08);
+    subGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.45);
     sub.start(t0);
-    sub.stop(t0 + 0.4);
+    sub.stop(t0 + 0.45);
   }
 
-  /** Click corto de encaje; intensity modula ganancia (0.1–1). */
+  /** Click muy suave de encaje; intensity modula ganancia (0.1–1). */
   _synthSnapTick(ctx, intensity) {
     const t0 = ctx.currentTime;
     const osc = ctx.createOscillator();
@@ -186,37 +186,35 @@ export class AudioManager {
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(800, t0);
-    osc.frequency.exponentialRampToValueAtTime(200, t0 + 0.04);
-    gain.gain.setValueAtTime(0.08 * intensity, t0);
-    gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.06);
+    osc.frequency.setValueAtTime(520, t0);
+    osc.frequency.exponentialRampToValueAtTime(260, t0 + 0.05);
+    gain.gain.setValueAtTime(0.03 * intensity, t0);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.08);
     osc.start(t0);
-    osc.stop(t0 + 0.06);
+    osc.stop(t0 + 0.08);
   }
 
-  /** Ascending fanfare for win */
+  /** Fanfarria suave y ascendente para win (agradable, no estridente). */
   _synthWin(ctx) {
+    const t0 = ctx.currentTime;
     const notes = [
-      { freq: 523.25, t: 0.0  },
-      { freq: 659.25, t: 0.12 },
-      { freq: 783.99, t: 0.24 },
-      { freq: 1046.5, t: 0.36 },
+      { freq: 523.25, t: 0.0 },
+      { freq: 659.25, t: 0.14 },
+      { freq: 783.99, t: 0.28 },
+      { freq: 1046.5, t: 0.42 },
     ];
     notes.forEach(({ freq, t }) => {
-      const osc  = ctx.createOscillator();
+      const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain);
       gain.connect(ctx.destination);
-
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(freq, ctx.currentTime + t);
-
-      gain.gain.setValueAtTime(0, ctx.currentTime + t);
-      gain.gain.linearRampToValueAtTime(0.22, ctx.currentTime + t + 0.03);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.6);
-
-      osc.start(ctx.currentTime + t);
-      osc.stop(ctx.currentTime + t + 0.65);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, t0 + t);
+      gain.gain.setValueAtTime(0, t0 + t);
+      gain.gain.linearRampToValueAtTime(0.08, t0 + t + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + t + 0.55);
+      osc.start(t0 + t);
+      osc.stop(t0 + t + 0.55);
     });
   }
 }

@@ -390,10 +390,13 @@ body[data-hide-board-borders="true"] #ghost {
   gap: 20px;
   z-index: 100;
   pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease-out;
 }
 .win-overlay.show {
   display: flex;
   pointer-events: auto;
+  opacity: 1;
 }
 
 .win-overlay__title {
@@ -402,7 +405,12 @@ body[data-hide-board-borders="true"] #ghost {
   font-weight: 600;
   color: var(--gold);
   text-align: center;
-  animation: glow 2s ease-in-out infinite alternate;
+  animation: glow 2.5s ease-in-out infinite alternate;
+  animation: winTitleIn 0.5s ease-out, glow 2.5s ease-in-out 0.5s infinite alternate;
+}
+@keyframes winTitleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 @keyframes glow {

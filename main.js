@@ -215,7 +215,7 @@ async function boot(level) {
     const lastPositions = placed.map((p) => p.to);
     const lastIds = placed.map((p) => p.pieceId);
     for (let i = 0; i < Math.min(3, lastIds.length); i++) {
-      setTimeout(() => audio.playSnapTick(0.5 + (i + 1) * 0.15), 80 + i * 60);
+      setTimeout(() => audio.playSnapTick(0.4 + (i + 1) * 0.2), 120 + i * 80);
     }
     const nextLevelClassic = currentMode === 'classic' ? getNextLevelForClassic() : null;
     const hasNextLevel = currentMode === 'infinite' ? true : !!nextLevelClassic;

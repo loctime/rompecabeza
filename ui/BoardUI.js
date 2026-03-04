@@ -2,14 +2,15 @@
 const SNAP_DURATION_MS = 180;
 const BOUNCE_DURATION_MS = 120;
 const ALIGN_DURATION_MS = 80;
-const FREEZE_BEFORE_CAMERA_MS = 600; // Plan Maestro: "freeze 0.6s" antes del zoom
-const CAMERA_DURATION_MS = 2800;
-const CAMERA_ZOOM = 1.04;
+const FREEZE_BEFORE_CAMERA_MS = 400;  // Pausa breve antes del zoom (más fluido)
+const CAMERA_DURATION_MS = 1800;      // Zoom suave y adictivo
+const CAMERA_ZOOM_FACTOR = 1.06;      // Zoom sutil en el lugar
 const DRIFT_OFFSET_PX = 3;
-const PARTICLE_DURATION_MS = 1200; // Extras punto 9: partículas suaves tras zoom
+const PARTICLE_DURATION_MS = 1000;
 const PARTICLE_COUNT = 24;
 
 function easeOutCubic(t) { return 1 - (1 - t) ** 3; }
+function easeOutQuart(t) { return 1 - (1 - t) ** 4; }
 function easeInOutCubic(t) { return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2; }
 
 export class BoardUI {
@@ -135,22 +136,26 @@ export class BoardUI {
     setTimeout(done, FREEZE_BEFORE_CAMERA_MS);
   }
 
+  /**
+   * Zoom suave en el lugar: se anima el contenedor (no el wrap) para no tocar
+   * la escala actual del tablero y evitar el “achique” previo. Origen al centro.
+   */
   _step4Camera(done) {
     const start = performance.now();
     const wrap = this.wrapEl;
-    if (!wrap) {
+    const container = wrap?.parentElement;
+    if (!wrap || !container) {
       done();
       return;
     }
-    const baseScale = this._getBoardScale();
-    const endScale = baseScale * CAMERA_ZOOM;
-    wrap.style.transformOrigin = '50% 50%';
+    container.style.transformOrigin = '50% 50%';
+    container.style.transform = 'scale(1)';
     const tick = () => {
       const elapsed = performance.now() - start;
       const t = Math.min(1, elapsed / CAMERA_DURATION_MS);
-      const eased = easeInOutCubic(t);
-      const scale = baseScale + (endScale - baseScale) * eased;
-      wrap.style.transform = `scale(${scale})`;
+      const eased = easeOutQuart(t);
+      const scale = 1 + (CAMERA_ZOOM_FACTOR - 1) * eased;
+      container.style.transform = `scale(${scale})`;
       if (t < 1) requestAnimationFrame(tick);
       else done();
     };
@@ -222,6 +227,11 @@ export class BoardUI {
   }
 
   destroy() {
+    const container = this.wrapEl?.parentElement;
+    if (container) {
+      container.style.transform = '';
+      container.style.transformOrigin = '';
+    }
     if (this.gridOverlayEl) this.gridOverlayEl.style.display = '';
     if (this.wrapEl) {
       this.wrapEl.style.pointerEvents = '';
