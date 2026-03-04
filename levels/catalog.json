@@ -1,0 +1,5 @@
+{
+  "packs": [
+    { "id": "clasico", "manifest": "/levels/packs/pack-clasico.json" }
+  ]
+}

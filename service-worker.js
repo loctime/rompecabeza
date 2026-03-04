@@ -2,6 +2,7 @@ const CACHE_VERSION = 'v3';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DATA_CACHE = `data-${CACHE_VERSION}`;
 const NAV_CACHE = `nav-${CACHE_VERSION}`;
+const IMAGE_CACHE = 'puzzle-images-v1';
 
 const STATIC_ALLOWLIST = [
   './', './index.html', './offline.html', './main.js',
@@ -30,13 +31,16 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys.filter((k) => ![STATIC_CACHE, DATA_CACHE, NAV_CACHE].includes(k)).map((k) => caches.delete(k)));
+    await Promise.all(keys.filter((k) => ![STATIC_CACHE, DATA_CACHE, NAV_CACHE, IMAGE_CACHE].includes(k)).map((k) => caches.delete(k)));
   })());
 });
 
 function isNavigation(req) { return req.mode === 'navigate'; }
 function isDataRequest(url) { return url.pathname.endsWith('/data/levels.js') || url.pathname.includes('/levels/'); }
 function isStatic(url) { return url.origin === self.location.origin; }
+function isImageRequest(req, url) {
+  return req.destination === 'image' || /\/assets\/levels\/.*\.(jpg|jpeg|png|webp)$/i.test(url.pathname);
+}
 
 self.addEventListener('fetch', (event) => {
   const req = event.request;
@@ -68,6 +72,22 @@ self.addEventListener('fetch', (event) => {
         return net;
       } catch {
         return cached || new Response('{}', { headers: { 'Content-Type': 'application/json' } });
+      }
+    })());
+    return;
+  }
+
+  if (isImageRequest(req, url)) {
+    event.respondWith((async () => {
+      const cache = await caches.open(IMAGE_CACHE);
+      const cached = await cache.match(req);
+      if (cached) return cached;
+      try {
+        const net = await fetch(req);
+        if (net.ok) cache.put(req, net.clone());
+        return net;
+      } catch {
+        return new Response('', { status: 503 });
       }
     })());
     return;
