@@ -24,6 +24,7 @@ export class DragController {
     this._mdH = (e) => {
       const cell = e.target.closest('.cell');
       if (!cell) return;
+      if (this.session.completed || this.session.locked) return;
       e.preventDefault();
       this._startDrag(e.clientX, e.clientY, parseInt(cell.dataset.pos, 10));
       window.addEventListener('mousemove', this._mmH = (ev) => this._onMove(ev.clientX, ev.clientY));
@@ -34,6 +35,7 @@ export class DragController {
     this._tsH = (e) => {
       const cell = e.target.closest('.cell');
       if (!cell) return;
+      if (this.session.completed || this.session.locked) return;
       e.preventDefault();
       const t = e.touches[0];
       this._startDrag(t.clientX, t.clientY, parseInt(cell.dataset.pos, 10));
@@ -51,6 +53,7 @@ export class DragController {
   }
 
   _startDrag(cx, cy, pos) {
+    if (this.session.completed || this.session.locked) return;
     const fused = this.session.getFusedEdges();
     const group = this.session.getGroup(pos, fused);
     const { ghostCanvas, minR, minC } = this.boardUI.buildGroupCanvas(group, this.session);

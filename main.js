@@ -1,6 +1,7 @@
 import { DragController } from './engine/DragController.js';
 import { BoardUI } from './ui/BoardUI.js';
 import { HUD } from './ui/HUD.js';
+import { AudioManager } from './audio/AudioManager.js';
 import { levels, getLevelById } from './data/levels.js';
 import { EventBus, EVENTS } from './runtime/events.js';
 import { GameSession } from './runtime/GameSession.js';
@@ -10,6 +11,7 @@ import { AppStore } from './runtime/store.js';
 const bus = new EventBus();
 const assetManager = new AssetManager();
 const store = new AppStore();
+const audio = new AudioManager();
 
 let session;
 let boardUI;
@@ -19,6 +21,8 @@ let pieceCanvases = [];
 let unsubscribers = [];
 let currentLevelId = null;
 let boardScaleCleanup = null;
+let lastPiecePlacedInfo = null;
+let completionAAAStarted = false;
 
 const levelGridEl = document.getElementById('level-grid');
 const gameAreaEl = document.getElementById('game-area');
@@ -39,6 +43,8 @@ function showGame() {
 }
 
 function teardown() {
+  completionAAAStarted = false;
+  lastPiecePlacedInfo = null;
   boardScaleCleanup?.();
   boardScaleCleanup = null;
   drag?.destroy();
@@ -47,11 +53,45 @@ function teardown() {
   unsubscribers.forEach((u) => u());
   unsubscribers = [];
   session?.stop();
-  // Asegurar que nada quede encima bloqueando clics (ghost, overlay)
   const ghostEl = document.getElementById('ghost');
   if (ghostEl) ghostEl.style.display = 'none';
   const winEl = document.getElementById('win-overlay');
   if (winEl) winEl.classList.remove('show');
+  hud?.showGameHUD();
+}
+
+function getNextLevelId() {
+  if (!currentLevelId) return null;
+  const idx = levels.findIndex((l) => l.id === currentLevelId);
+  const next = levels[idx + 1];
+  return next ? next.id : null;
+}
+
+function showBlackOverlay() {
+  const el = document.getElementById('transition-overlay');
+  if (el) {
+    el.classList.add('show');
+    el.style.opacity = '0';
+    requestAnimationFrame(() => { el.style.opacity = '1'; });
+  }
+}
+
+function hideBlackOverlay() {
+  const el = document.getElementById('transition-overlay');
+  if (el) {
+    el.style.opacity = '0';
+    el.addEventListener('transitionend', () => el.classList.remove('show'), { once: true });
+  }
+}
+
+async function transitionToLevel(nextLevelId) {
+  if (!nextLevelId) return;
+  showBlackOverlay();
+  await new Promise((r) => setTimeout(r, 400));
+  hud?.hideWin();
+  teardown();
+  await boot(nextLevelId);
+  hideBlackOverlay();
 }
 
 function applyBoardScale(boardW, boardH) {
@@ -109,6 +149,10 @@ async function boot(levelId) {
     winEl: document.getElementById('win-overlay'),
     shuffleBtn: document.getElementById('shuffle-btn'),
     replayBtn: document.getElementById('replay-btn'),
+    nextLevelBtn: document.getElementById('next-level-btn'),
+    levelsBtn: document.getElementById('win-levels-btn'),
+    downloadBtn: document.getElementById('download-btn'),
+    winStatsEl: document.getElementById('win-stats'),
   });
 
   drag = new DragController({ session, boardUI });
@@ -117,12 +161,47 @@ async function boot(levelId) {
 
   hud.onShuffle(() => session.shuffle());
   hud.onReplay(() => { hud.hideWin(); boot(levelId); });
+  audio.warmup();
 
+  unsubscribers.push(bus.on(EVENTS.PIECE_PLACED, (payload) => {
+    lastPiecePlacedInfo = payload;
+  }));
   unsubscribers.push(bus.on(EVENTS.MOVE_APPLIED, ({ affected }) => {
     boardUI.render(session, pieceCanvases, affected);
     hud.update(session.getSnapshot());
   }));
-  unsubscribers.push(bus.on(EVENTS.PUZZLE_SOLVED, () => hud.showWin()));
+  unsubscribers.push(bus.on(EVENTS.PUZZLE_COMPLETED, (stats) => {
+    if (completionAAAStarted) return;
+    completionAAAStarted = true;
+    hud.hideGameHUD();
+    boardUI.setCinematicMode(true);
+    audio.playVictoryChime();
+    const placed = lastPiecePlacedInfo?.placed || [];
+    const lastPositions = placed.map((p) => p.to);
+    const lastIds = placed.map((p) => p.pieceId);
+    for (let i = 0; i < Math.min(3, lastIds.length); i++) {
+      setTimeout(() => audio.playSnapTick(0.5 + (i + 1) * 0.15), 80 + i * 60);
+    }
+    boardUI.playCompletionAAA(stats, { lastPlacedPositions: lastPositions, lastPlacedPieceIds: lastIds })
+      .then(() => {
+        const nextId = getNextLevelId();
+        hud.showCompletionBanner(stats, {
+          hasNextLevel: !!nextId,
+          onNextLevel: () => transitionToLevel(nextId),
+          onReplay: () => { hud.hideWin(); boot(levelId); },
+          onLevels: () => { hud.hideWin(); teardown(); renderLevelGrid(); showLevelGrid(); },
+          onDownload: () => {
+            const url = boardUI.exportSolvedImage();
+            if (url) {
+              const a = document.createElement('a');
+              a.download = `puzzle-${currentLevelId}.png`;
+              a.href = url;
+              a.click();
+            }
+          },
+        });
+      });
+  }));
   unsubscribers.push(bus.on(EVENTS.TIMER_TICK, () => hud.update(session.getSnapshot())));
   unsubscribers.push(bus.on(EVENTS.SESSION_END, async (payload) => {
     await store.markLevelResult(payload.levelId, payload.mode, {

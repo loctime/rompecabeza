@@ -28,13 +28,17 @@
   <canvas id="ghost"></canvas>
 
   <div id="win-overlay">
-    <h2>¡Completado!</h2>
+    <h2>Completado</h2>
+    <div id="win-stats" class="win-stats"></div>
     <div class="win-actions">
-      <button id="replay-btn">Jugar de nuevo</button>
-      <button id="win-levels-btn">Niveles</button>
+      <button id="next-level-btn" class="win-cta">Siguiente nivel</button>
+      <button id="replay-btn" class="win-cta">Repetir</button>
+      <button id="win-levels-btn" class="win-cta">Niveles</button>
+      <button id="download-btn" class="win-cta">Descargar</button>
     </div>
   </div>
 
+  <div id="transition-overlay" class="transition-overlay" aria-hidden="true"></div>
   <script type="module" src="main.js"></script>
 </body>
 </html>

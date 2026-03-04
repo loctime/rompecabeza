@@ -117,12 +117,18 @@ export function applyMove(state, originPos, destCol, destRow) {
 
   const next = { ...state, board, moveCount: state.moveCount + 1 };
   const nowFused = getFusedEdges(next).size;
+  const placed = group.map((fromPos, i) => ({
+    pieceId: state.board[fromPos],
+    fromPos,
+    toPos: newPos[i],
+  }));
   return {
     moved: true,
     state: next,
     fusionGained: nowFused > prevFused,
     solved: isSolved(next),
     affected: [...new Set([...group, ...newPos, ...vacated, ...displaced])],
+    placed,
   };
 }
 

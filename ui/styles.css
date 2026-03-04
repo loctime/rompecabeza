@@ -319,7 +319,43 @@ body[data-hide-board-borders="true"] #ghost {
 }
 #win-overlay button:hover { background: var(--gold); color: var(--bg); }
 
+#win-overlay .win-stats {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+  text-align: center;
+  margin: -8px 0 8px;
+}
+
 #win-overlay .win-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+
+#win-overlay .win-cta {
+  background: transparent;
+  border: 1px solid var(--gold-dim);
+  color: var(--gold);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 10px 24px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+#win-overlay .win-cta:hover { background: var(--gold); color: var(--bg); }
+
+/* ── Transición a siguiente nivel (fade a negro). Ajustar duración en transition property. ── */
+.transition-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 200;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.transition-overlay.show {
+  pointer-events: auto;
+}
 
 /* ── Tablet/desktop: más espacio y columnas ── */
 @media (min-width: 480px) {

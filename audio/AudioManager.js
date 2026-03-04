@@ -43,6 +43,24 @@ export class AudioManager {
     }
   }
 
+  /** Chime suave + subgrave sutil para victoria (secuencia AAA). */
+  playVictoryChime() {
+    if (this._muted) return;
+    try {
+      const ctx = this._getContext();
+      this._synthVictoryChime(ctx);
+    } catch (e) {}
+  }
+
+  /** Click de encaje para últimas piezas. intensity en [0,1] modula ganancia/duración. */
+  playSnapTick(intensity = 0.7) {
+    if (this._muted) return;
+    try {
+      const ctx = this._getContext();
+      this._synthSnapTick(ctx, Math.max(0.1, Math.min(1, intensity)));
+    } catch (e) {}
+  }
+
   mute()   { this._muted = true; }
   unmute() { this._muted = false; }
   toggle() { this._muted = !this._muted; }
@@ -111,6 +129,52 @@ export class AudioManager {
       osc.start(ctx.currentTime + i * 0.05);
       osc.stop(ctx.currentTime + i * 0.05 + 0.5);
     });
+  }
+
+  /** Chime suave + subgrave para secuencia AAA (más breve que win). */
+  _synthVictoryChime(ctx) {
+    const t0 = ctx.currentTime;
+    const freqs = [523.25, 659.25, 783.99];
+    freqs.forEach((freq, i) => {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, t0 + i * 0.04);
+      gain.gain.setValueAtTime(0, t0 + i * 0.04);
+      gain.gain.linearRampToValueAtTime(0.12, t0 + i * 0.04 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + i * 0.04 + 0.35);
+      osc.start(t0 + i * 0.04);
+      osc.stop(t0 + i * 0.04 + 0.35);
+    });
+    const sub = ctx.createOscillator();
+    const subGain = ctx.createGain();
+    sub.connect(subGain);
+    subGain.connect(ctx.destination);
+    sub.type = 'sine';
+    sub.frequency.setValueAtTime(130.81, t0);
+    subGain.gain.setValueAtTime(0, t0);
+    subGain.gain.linearRampToValueAtTime(0.06, t0 + 0.05);
+    subGain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.4);
+    sub.start(t0);
+    sub.stop(t0 + 0.4);
+  }
+
+  /** Click corto de encaje; intensity modula ganancia (0.1–1). */
+  _synthSnapTick(ctx, intensity) {
+    const t0 = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800, t0);
+    osc.frequency.exponentialRampToValueAtTime(200, t0 + 0.04);
+    gain.gain.setValueAtTime(0.08 * intensity, t0);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.06);
+    osc.start(t0);
+    osc.stop(t0 + 0.06);
   }
 
   /** Ascending fanfare for win */

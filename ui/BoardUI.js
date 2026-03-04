@@ -1,3 +1,14 @@
+// ── Timing/easing: ajustar duraciones (ms) y zoom para la secuencia AAA ─────────────────
+const SNAP_DURATION_MS = 180;
+const BOUNCE_DURATION_MS = 120;
+const ALIGN_DURATION_MS = 80;
+const CAMERA_DURATION_MS = 2800;
+const CAMERA_ZOOM = 1.04;
+const DRIFT_OFFSET_PX = 3;
+
+function easeOutCubic(t) { return 1 - (1 - t) ** 3; }
+function easeInOutCubic(t) { return t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2; }
+
 export class BoardUI {
   constructor({ wrapEl, ghostEl, hoverEl, gridOverlayEl, boardW, boardH, cols, rows, hideBoardBorders = true }) {
     this.wrapEl = wrapEl;
@@ -18,10 +29,144 @@ export class BoardUI {
     gridOverlayEl.height = boardH;
     this._gctx = gridOverlayEl.getContext('2d');
     this._cellEls = [];
+    this._cinematicMode = false;
+  }
+
+  /** Deshabilita pointer events en el tablero y oculta artefactos de UI del board. */
+  setCinematicMode(enabled) {
+    this._cinematicMode = !!enabled;
+    if (this.wrapEl) this.wrapEl.style.pointerEvents = enabled ? 'none' : '';
+  }
+
+  /**
+   * Ejecuta la secuencia AAA; al terminar resuelve la Promise.
+   * context = { lastPieceId?, lastPlacedPieceIds?, lastPlacedPositions? }. Si no hay lastPlacedPositions, se usan lastPlacedPieceIds (en tablero resuelto, pieceId i está en pos i).
+   */
+  playCompletionAAA(stats, context = {}) {
+    const positions = context.lastPlacedPositions ?? (context.lastPlacedPieceIds || []).map((id) => id);
+    return new Promise((resolve) => {
+      const steps = () => {
+        this._step1SnapBounce(positions, () => {
+          this._step2AlignAll(() => {
+            this._step3HideGrid(() => {
+              this._step4Camera(resolve);
+            });
+          });
+        });
+      };
+      steps();
+    });
+  }
+
+  _step1SnapBounce(lastPlacedPositions, done) {
+    if (!lastPlacedPositions.length) {
+      setTimeout(done, SNAP_DURATION_MS + BOUNCE_DURATION_MS);
+      return;
+    }
+    const cells = lastPlacedPositions.map((pos) => this._cellEls[pos]).filter(Boolean);
+    if (!cells.length) {
+      setTimeout(done, SNAP_DURATION_MS + BOUNCE_DURATION_MS);
+      return;
+    }
+    cells.forEach((el) => {
+      el.style.transform = `translate(${DRIFT_OFFSET_PX}px, ${DRIFT_OFFSET_PX}px)`;
+      el.style.transition = 'none';
+    });
+    requestAnimationFrame(() => {
+      cells.forEach((el) => {
+        el.style.transition = `transform ${SNAP_DURATION_MS}ms cubic-bezier(0.25, 0.1, 0.25, 1)`;
+        el.style.transform = 'translate(0,0)';
+      });
+    });
+    setTimeout(() => {
+      cells.forEach((el) => {
+        el.style.transition = `transform ${BOUNCE_DURATION_MS}ms cubic-bezier(0.34, 1.56, 0.64, 1)`;
+        el.style.transform = 'scale(1.02)';
+      });
+      requestAnimationFrame(() => {
+        cells.forEach((el) => {
+          el.style.transform = 'scale(1)';
+        });
+      });
+    }, SNAP_DURATION_MS);
+    setTimeout(done, SNAP_DURATION_MS + BOUNCE_DURATION_MS);
+  }
+
+  _step2AlignAll(done) {
+    const tol = 1;
+    let needsAlign = false;
+    for (let pos = 0; pos < this._cellEls.length; pos++) {
+      const cell = this._cellEls[pos];
+      if (!cell) continue;
+      const col = pos % this.cols;
+      const row = Math.floor(pos / this.cols);
+      const wantLeft = col * this.cellW;
+      const wantTop = row * this.cellH;
+      const style = cell.style;
+      const curLeft = parseFloat(style.left) || 0;
+      const curTop = parseFloat(style.top) || 0;
+      if (Math.abs(curLeft - wantLeft) > tol || Math.abs(curTop - wantTop) > tol) {
+        style.left = wantLeft + 'px';
+        style.top = wantTop + 'px';
+        style.transform = '';
+        needsAlign = true;
+      }
+    }
+    setTimeout(done, ALIGN_DURATION_MS);
+  }
+
+  _step3HideGrid(done) {
+    if (this._gctx && this.gridOverlayEl) {
+      this._gctx.clearRect(0, 0, this.gridOverlayEl.width, this.gridOverlayEl.height);
+    }
+    this.gridOverlayEl.style.display = 'none';
+    setTimeout(done, 50);
+  }
+
+  _step4Camera(done) {
+    const start = performance.now();
+    const wrap = this.wrapEl;
+    if (!wrap) {
+      done();
+      return;
+    }
+    const baseScale = this._getBoardScale();
+    const endScale = baseScale * CAMERA_ZOOM;
+    wrap.style.transformOrigin = '50% 50%';
+    const tick = () => {
+      const elapsed = performance.now() - start;
+      const t = Math.min(1, elapsed / CAMERA_DURATION_MS);
+      const eased = easeInOutCubic(t);
+      const scale = baseScale + (endScale - baseScale) * eased;
+      wrap.style.transform = `scale(${scale})`;
+      if (t < 1) requestAnimationFrame(tick);
+      else done();
+    };
+    requestAnimationFrame(tick);
+  }
+
+  /** Devuelve data URL PNG del tablero resuelto (pieza i en celda i). */
+  exportSolvedImage() {
+    if (!this._pieceCanvases) return null;
+    const canvas = document.createElement('canvas');
+    canvas.width = this.boardW;
+    canvas.height = this.boardH;
+    const ctx = canvas.getContext('2d');
+    for (let pos = 0; pos < this.cols * this.rows; pos++) {
+      const col = pos % this.cols;
+      const row = Math.floor(pos / this.cols);
+      const pieceCanvas = this._pieceCanvases[pos];
+      if (pieceCanvas) ctx.drawImage(pieceCanvas, col * this.cellW, row * this.cellH);
+    }
+    return canvas.toDataURL('image/png');
   }
 
   destroy() {
+    if (this.gridOverlayEl) this.gridOverlayEl.style.display = '';
     if (this.wrapEl) {
+      this.wrapEl.style.pointerEvents = '';
+      this.wrapEl.style.transform = '';
+      this.wrapEl.style.transformOrigin = '';
       this.wrapEl.innerHTML = '';
     }
     if (this._gctx && this.gridOverlayEl) {

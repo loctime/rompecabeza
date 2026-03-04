@@ -23,6 +23,8 @@ export class GameSession {
     this.score = 0;
     this._raf = null;
     this._ended = false;
+    this.completed = false;
+    this.locked = false;
     this.config = { ...MODE_DEFAULTS[mode] };
   }
 
@@ -51,9 +53,26 @@ export class GameSession {
     if (!result.moved) return result;
     this.state = result.state;
     this.score += result.fusionGained ? 25 : 5;
+    const placed = (result.placed || []).map(({ pieceId, fromPos, toPos }) => ({
+      pieceId,
+      from: fromPos,
+      to: toPos,
+      isCorrectCell: result.state.board[toPos] === result.state.solvedBoard[toPos],
+      isNowLocked: result.solved,
+    }));
+    this.bus.emit(EVENTS.PIECE_PLACED, { ...this.getSnapshot(), placed });
     this.bus.emit(EVENTS.MOVE_APPLIED, { ...this.getSnapshot(), affected: result.affected });
     if (result.fusionGained) this.bus.emit(EVENTS.FUSION_GAINED, this.getSnapshot());
     if (result.solved) {
+      this.completed = true;
+      this.locked = true;
+      const stats = {
+        ...this.getSnapshot(),
+        moves: this.state.moveCount,
+        elapsedMs: this.elapsedMs,
+        completedAt: Date.now(),
+      };
+      this.bus.emit(EVENTS.PUZZLE_COMPLETED, stats);
       this.bus.emit(EVENTS.PUZZLE_SOLVED, this.getSnapshot());
       this.end('win');
     }
