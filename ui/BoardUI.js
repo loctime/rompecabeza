@@ -69,24 +69,36 @@ export class BoardUI {
     this._gctx.clearRect(0, 0, this.boardW, this.boardH);
     if (this.hideBoardBorders) return;
     const fused = session.getFusedEdges();
-    this._gctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    this._gctx.strokeStyle = '#000';
     this._gctx.lineWidth = 1;
+    // Líneas verticales entre celdas no fusionadas (solo entre bloques no fusionados)
     for (let c = 1; c < this.cols; c++) {
       for (let r = 0; r < this.rows; r++) {
         const posL = r * this.cols + (c - 1);
         const posR = r * this.cols + c;
         if (fused.has(`${posL}:${posR}`)) continue;
-        const x = c * this.cellW;
-        this._gctx.beginPath(); this._gctx.moveTo(x, r * this.cellH); this._gctx.lineTo(x, (r + 1) * this.cellH); this._gctx.stroke();
+        const x = Math.round(c * this.cellW) + 0.5;
+        const y0 = Math.floor(r * this.cellH);
+        const y1 = Math.ceil((r + 1) * this.cellH);
+        this._gctx.beginPath();
+        this._gctx.moveTo(x, y0);
+        this._gctx.lineTo(x, y1);
+        this._gctx.stroke();
       }
     }
+    // Líneas horizontales entre celdas no fusionadas (evitar subpíxel en primera fila)
     for (let r = 1; r < this.rows; r++) {
       for (let c = 0; c < this.cols; c++) {
         const posT = (r - 1) * this.cols + c;
         const posB = r * this.cols + c;
         if (fused.has(`${posT}:${posB}`)) continue;
-        const y = r * this.cellH;
-        this._gctx.beginPath(); this._gctx.moveTo(c * this.cellW, y); this._gctx.lineTo((c + 1) * this.cellW, y); this._gctx.stroke();
+        const y = Math.round(r * this.cellH) + 0.5;
+        const x0 = Math.floor(c * this.cellW);
+        const x1 = Math.ceil((c + 1) * this.cellW);
+        this._gctx.beginPath();
+        this._gctx.moveTo(x0, y);
+        this._gctx.lineTo(x1, y);
+        this._gctx.stroke();
       }
     }
   }
