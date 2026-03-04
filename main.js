@@ -42,10 +42,16 @@ function teardown() {
   boardScaleCleanup?.();
   boardScaleCleanup = null;
   drag?.destroy();
+  boardUI?.endGhost?.();
   boardUI?.destroy();
   unsubscribers.forEach((u) => u());
   unsubscribers = [];
   session?.stop();
+  // Asegurar que nada quede encima bloqueando clics (ghost, overlay)
+  const ghostEl = document.getElementById('ghost');
+  if (ghostEl) ghostEl.style.display = 'none';
+  const winEl = document.getElementById('win-overlay');
+  if (winEl) winEl.classList.remove('show');
 }
 
 function applyBoardScale(boardW, boardH) {

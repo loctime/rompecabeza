@@ -248,8 +248,12 @@ body[data-hide-board-borders="true"] #ghost {
   flex-direction: column;
   gap: 16px;
   z-index: 100;
+  pointer-events: none;
 }
-#win-overlay.show { display: flex; }
+#win-overlay.show {
+  display: flex;
+  pointer-events: auto;
+}
 
 #win-overlay h2 {
   font-family: 'Playfair Display', serif;
