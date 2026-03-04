@@ -13,7 +13,7 @@ export class HUD {
   update(snapshot) {
     if (!this.statusEl) return;
     const seconds = Math.floor(snapshot.elapsedMs / 1000);
-    this.statusEl.textContent = `${snapshot.fusedEdges}/${snapshot.totalEdges} fusionadas · mov:${snapshot.moveCount} · t:${seconds}s · score:${snapshot.score}`;
+    this.statusEl.textContent = `${snapshot.fusedEdges}/${snapshot.totalEdges} · mov:${snapshot.moveCount} · t:${seconds}s · score:${snapshot.score}`;
   }
 
   showWin() { this.winEl.classList.add('show'); }

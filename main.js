@@ -120,10 +120,16 @@ async function transitionToLevel(nextLevel) {
 function applyBoardScale(boardW, boardH) {
   if (!boardContainerEl || !boardWrapEl) return;
   const padding = 24;
-  // En juego el tablero va justo bajo el botón Niveles, reservamos solo ese botón.
-  const headerGap = document.body.dataset.view === 'game' ? 8 : 80;
+  const isGame = document.body.dataset.view === 'game';
+  const topGap = isGame ? 8 : 80;
+  let bottomGap = padding;
+  if (isGame) {
+    const bar = document.querySelector('.game-bottom-bar');
+    const barH = bar ? bar.getBoundingClientRect().height : 0;
+    bottomGap = (barH > 0 ? barH : 52) + 12;
+  }
   const availW = Math.min(document.documentElement.clientWidth, window.innerWidth) - padding;
-  const availH = Math.min(document.documentElement.clientHeight, window.innerHeight) - headerGap - padding;
+  const availH = Math.min(document.documentElement.clientHeight, window.innerHeight) - topGap - bottomGap;
   const scale = Math.min(1, availW / boardW, availH / boardH);
   boardContainerEl.style.setProperty('--board-scale', String(scale));
   boardWrapEl.style.width = boardW + 'px';

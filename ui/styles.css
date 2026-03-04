@@ -286,7 +286,7 @@ body[data-view="game"] .app-header {
 
 /* ── Área de juego ── */
 body[data-view="game"] {
-  padding: max(6px, env(safe-area-inset-top)) 12px 12px 12px;
+  padding: max(4px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)) 12px;
 }
 
 .game-view {
@@ -297,8 +297,9 @@ body[data-view="game"] {
   gap: 0;
   width: 100%;
   max-width: 100%;
-  flex: 0 0 auto;
-  overflow-x: hidden;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 #board-container {
@@ -309,7 +310,6 @@ body[data-view="game"] {
   max-width: 100%;
   flex: 0 0 auto;
   min-width: 0;
-  min-height: 0;
   overflow: hidden;
 }
 
@@ -334,6 +334,25 @@ body[data-view="game"] {
   z-index: 11;
 }
 
+/* Barra inferior fija: Niveles, estado, Mezclar (siempre visible en móvil) */
+.game-bottom-bar {
+  --game-bottom-bar-height: 52px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  width: 100%;
+  min-height: var(--game-bottom-bar-height);
+  padding: 10px 0 0;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.game-bottom-bar .nav-btn--game {
+  margin-bottom: 0;
+}
+
 .game-status {
   font-size: 0.65rem;
   color: var(--text-dim);
@@ -341,7 +360,7 @@ body[data-view="game"] {
   text-transform: uppercase;
   height: 18px;
   text-align: center;
-  margin-top: 4px;
+  flex: 0 0 auto;
 }
 
 .shuffle-btn {
@@ -354,7 +373,7 @@ body[data-view="game"] {
   text-transform: uppercase;
   padding: 10px 22px;
   border-radius: var(--radius-sm);
-  margin-top: 8px;
+  margin: 0;
   cursor: pointer;
   transition: border-color 0.2s, color 0.2s;
 }

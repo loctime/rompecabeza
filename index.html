@@ -42,17 +42,19 @@
     <div id="level-grid" class="level-grid"></div>
   </section>
 
-  <!-- Área de juego -->
+  <!-- Área de juego: tablero arriba hasta el borde superior, botones abajo -->
   <section id="game-area" class="view-section game-view" data-view-section="game">
-    <button type="button" id="back-levels-btn" class="nav-btn nav-btn--game">← Niveles</button>
     <div id="board-container">
       <div id="board-wrap">
         <canvas id="grid-overlay"></canvas>
         <div id="hover-overlay"></div>
       </div>
     </div>
-    <div id="status" class="game-status"></div>
-    <button id="shuffle-btn" class="shuffle-btn">Mezclar</button>
+    <div class="game-bottom-bar">
+      <button type="button" id="back-levels-btn" class="nav-btn nav-btn--game">← Niveles</button>
+      <div id="status" class="game-status"></div>
+      <button id="shuffle-btn" class="shuffle-btn">Mezclar</button>
+    </div>
   </section>
 
   <canvas id="ghost" aria-hidden="true"></canvas>
