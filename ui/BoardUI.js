@@ -288,10 +288,8 @@ export class BoardUI {
     const fused = session.getFusedEdges();
     const { cols, rows, total } = session.state;
 
-    // 1) Líneas finas entre celdas no fusionadas (con margen para que no se toquen)
-    const sepInset = 2;
-    this._gctx.strokeStyle = '#000';
-    this._gctx.lineWidth = 1;
+    // 1) Separadores entre celdas no fusionadas con borde doble (blanco + negro).
+    const sepInset = 3;
     for (let c = 1; c < this.cols; c++) {
       for (let r = 0; r < this.rows; r++) {
         const posL = r * this.cols + (c - 1);
@@ -302,12 +300,7 @@ export class BoardUI {
         const y1 = Math.ceil((r + 1) * this.cellH);
         const ya = y0 + sepInset;
         const yb = y1 - sepInset;
-        if (ya < yb) {
-          this._gctx.beginPath();
-          this._gctx.moveTo(x, ya);
-          this._gctx.lineTo(x, yb);
-          this._gctx.stroke();
-        }
+        if (ya < yb) this._drawDualStroke(x, ya, x, yb);
       }
     }
     for (let r = 1; r < this.rows; r++) {
@@ -320,16 +313,14 @@ export class BoardUI {
         const x1 = Math.ceil((c + 1) * this.cellW);
         const xa = x0 + sepInset;
         const xb = x1 - sepInset;
-        if (xa < xb) {
-          this._gctx.beginPath();
-          this._gctx.moveTo(xa, y);
-          this._gctx.lineTo(xb, y);
-          this._gctx.stroke();
-        }
+        if (xa < xb) this._drawDualStroke(xa, y, xb, y);
       }
     }
 
-    // 2) Contorno grueso para cada bloque fusionado (2+ celdas)
+    // Remates en esquina para efecto "carta separada".
+    this._drawCornerCaps(fused, cols, rows);
+
+    // 2) Contorno para cada bloque fusionado (2+ celdas)
     const seen = new Set();
     const groups = [];
     for (let pos = 0; pos < total; pos++) {
@@ -377,6 +368,59 @@ export class BoardUI {
     }
   }
 
+  _drawDualStroke(x0, y0, x1, y1) {
+    this._gctx.lineCap = 'round';
+    this._gctx.strokeStyle = 'rgba(255, 255, 255, 0.98)';
+    this._gctx.lineWidth = 3;
+    this._gctx.beginPath();
+    this._gctx.moveTo(x0, y0);
+    this._gctx.lineTo(x1, y1);
+    this._gctx.stroke();
+
+    this._gctx.strokeStyle = 'rgba(0, 0, 0, 0.92)';
+    this._gctx.lineWidth = 1.1;
+    this._gctx.beginPath();
+    this._gctx.moveTo(x0, y0);
+    this._gctx.lineTo(x1, y1);
+    this._gctx.stroke();
+  }
+
+  _drawCornerCaps(fused, cols, rows) {
+    const capInset = 1.5;
+    const capLen = Math.max(4, Math.min(this.cellW, this.cellH) * 0.17);
+    const isFused = (a, b) => fused.has(`${Math.min(a, b)}:${Math.max(a, b)}`);
+
+    for (let pos = 0; pos < cols * rows; pos++) {
+      const r = Math.floor(pos / cols);
+      const c = pos % cols;
+      const x0 = c * this.cellW;
+      const y0 = r * this.cellH;
+      const x1 = (c + 1) * this.cellW;
+      const y1 = (r + 1) * this.cellH;
+
+      const openLeft = c === 0 || !isFused(pos, pos - 1);
+      const openRight = c === cols - 1 || !isFused(pos, pos + 1);
+      const openTop = r === 0 || !isFused(pos, pos - cols);
+      const openBottom = r === rows - 1 || !isFused(pos, pos + cols);
+
+      if (openTop && openLeft) {
+        this._drawDualStroke(x0 + capInset, y0 + capInset, x0 + capInset + capLen, y0 + capInset);
+        this._drawDualStroke(x0 + capInset, y0 + capInset, x0 + capInset, y0 + capInset + capLen);
+      }
+      if (openTop && openRight) {
+        this._drawDualStroke(x1 - capInset - capLen, y0 + capInset, x1 - capInset, y0 + capInset);
+        this._drawDualStroke(x1 - capInset, y0 + capInset, x1 - capInset, y0 + capInset + capLen);
+      }
+      if (openBottom && openLeft) {
+        this._drawDualStroke(x0 + capInset, y1 - capInset - capLen, x0 + capInset, y1 - capInset);
+        this._drawDualStroke(x0 + capInset, y1 - capInset, x0 + capInset + capLen, y1 - capInset);
+      }
+      if (openBottom && openRight) {
+        this._drawDualStroke(x1 - capInset - capLen, y1 - capInset, x1 - capInset, y1 - capInset);
+        this._drawDualStroke(x1 - capInset, y1 - capInset - capLen, x1 - capInset, y1 - capInset);
+      }
+    }
+  }
   buildGroupCanvas(group, session) {
     const rs = group.map((p) => Math.floor(p / session.state.cols));
     const cs = group.map((p) => p % session.state.cols);
