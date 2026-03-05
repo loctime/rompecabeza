@@ -1,0 +1,17 @@
+{
+  "id": "cosas",
+  "name": "Cosas",
+  "coverImage": "/assets/levels/cosas/cosas-01.jpg",
+  "levels": [
+    { "id": "cosas-01", "image": "/assets/levels/cosas/cosas-01.jpg", "grid": 3, "theme": "cosas", "title": "Cosas 1", "difficulty": 1 },
+    { "id": "cosas-02", "image": "/assets/levels/cosas/cosas-02.jpg", "grid": 4, "theme": "cosas", "title": "Cosas 2", "difficulty": 2 },
+    { "id": "cosas-03", "image": "/assets/levels/cosas/cosas-03.jpg", "grid": 5, "theme": "cosas", "title": "Cosas 3", "difficulty": 3 },
+    { "id": "cosas-04", "image": "/assets/levels/cosas/cosas-04.jpg", "grid": 6, "theme": "cosas", "title": "Cosas 4", "difficulty": 4 },
+    { "id": "cosas-05", "image": "/assets/levels/cosas/cosas-05.jpg", "grid": 7, "theme": "cosas", "title": "Cosas 5", "difficulty": 5 },
+    { "id": "cosas-06", "image": "/assets/levels/cosas/cosas-06.jpg", "grid": 3, "theme": "cosas", "title": "Cosas 6", "difficulty": 1 },
+    { "id": "cosas-07", "image": "/assets/levels/cosas/cosas-07.jpg", "grid": 4, "theme": "cosas", "title": "Cosas 7", "difficulty": 2 },
+    { "id": "cosas-08", "image": "/assets/levels/cosas/cosas-08.jpg", "grid": 5, "theme": "cosas", "title": "Cosas 8", "difficulty": 3 },
+    { "id": "cosas-09", "image": "/assets/levels/cosas/cosas-09.jpg", "grid": 6, "theme": "cosas", "title": "Cosas 9", "difficulty": 4 },
+    { "id": "cosas-10", "image": "/assets/levels/cosas/cosas-10.jpg", "grid": 7, "theme": "cosas", "title": "Cosas 10", "difficulty": 5 }
+  ]
+}

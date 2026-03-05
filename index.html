@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0f0e0c">
-  <title>Rompecoco — Puzzle</title>
+  <title>Rompecoco - Puzzle</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="ui/styles.css">
 </head>
@@ -14,35 +14,41 @@
     <p class="app-tagline">Une las piezas</p>
   </header>
 
-  <!-- Pantalla principal: modos de juego -->
   <section id="home" class="view-section home-view" data-view-section="home">
+    <div class="category-picker">
+      <label for="category-select-home" class="category-picker__label">Categoria</label>
+      <select id="category-select-home" class="category-picker__select"></select>
+    </div>
+
     <div class="mode-cards">
-      <button type="button" id="mode-daily" class="mode-card mode-card--daily" aria-label="Desafío del día">
-        <span class="mode-card__icon" aria-hidden="true">◇</span>
-        <span class="mode-card__title">Desafío del día</span>
-        <span class="mode-card__desc">Un puzzle nuevo cada día para todos</span>
+      <button type="button" id="mode-daily" class="mode-card mode-card--daily" aria-label="Desafio del dia">
+        <span class="mode-card__icon" aria-hidden="true">?</span>
+        <span class="mode-card__title">Desafio del dia</span>
+        <span class="mode-card__desc">Un puzzle nuevo cada dia para todos</span>
       </button>
-      <button type="button" id="mode-clasico" class="mode-card mode-card--clasico" aria-label="Modo clásico 50 niveles">
-        <span class="mode-card__icon" aria-hidden="true">▣</span>
-        <span class="mode-card__title">Clásico</span>
-        <span class="mode-card__desc">50 niveles para completar</span>
+      <button type="button" id="mode-clasico" class="mode-card mode-card--clasico" aria-label="Modo clasico por categoria">
+        <span class="mode-card__icon" aria-hidden="true">?</span>
+        <span class="mode-card__title">Clasico</span>
+        <span class="mode-card__desc">Avanza por niveles de la categoria elegida</span>
       </button>
       <button type="button" id="mode-infinito" class="mode-card mode-card--infinito" aria-label="Modo infinito">
-        <span class="mode-card__icon" aria-hidden="true">∞</span>
+        <span class="mode-card__icon" aria-hidden="true">8</span>
         <span class="mode-card__title">Infinito</span>
-        <span class="mode-card__desc">Puzzles sin fin</span>
+        <span class="mode-card__desc">Puzzles sin fin con coleccion propia</span>
       </button>
     </div>
   </section>
 
-  <!-- Lista de niveles (modo clásico) -->
   <section id="levels-view" class="view-section levels-view" data-view-section="levels">
-    <button type="button" id="back-home-btn" class="nav-btn">← Inicio</button>
-    <h2 class="section-title">Elige nivel</h2>
+    <button type="button" id="back-home-btn" class="nav-btn">? Inicio</button>
+    <h2 id="levels-title" class="section-title">Elige nivel</h2>
+    <div class="category-picker category-picker--compact">
+      <label for="category-select-levels" class="category-picker__label">Categoria</label>
+      <select id="category-select-levels" class="category-picker__select"></select>
+    </div>
     <div id="level-grid" class="level-grid"></div>
   </section>
 
-  <!-- Área de juego: tablero arriba hasta el borde superior, botones abajo -->
   <section id="game-area" class="view-section game-view" data-view-section="game">
     <div id="board-container">
       <div id="board-wrap">
@@ -51,7 +57,7 @@
       </div>
     </div>
     <div class="game-bottom-bar">
-      <button type="button" id="back-levels-btn" class="nav-btn nav-btn--game">← Niveles</button>
+      <button type="button" id="back-levels-btn" class="nav-btn nav-btn--game">? Niveles</button>
       <div id="status" class="game-status"></div>
       <button id="shuffle-btn" class="shuffle-btn">Mezclar</button>
     </div>

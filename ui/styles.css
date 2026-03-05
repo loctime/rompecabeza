@@ -529,3 +529,41 @@ body[data-hide-board-borders="true"] #ghost {
   .mode-card__icon { font-size: 1.75rem; }
   .mode-card__title { font-size: 1.25rem; }
 }
+
+/* Category picker */
+.category-picker {
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.category-picker--compact {
+  max-width: 260px;
+  align-self: flex-start;
+}
+
+.category-picker__label {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.category-picker__select {
+  width: 100%;
+  background: var(--bg-card);
+  color: var(--text);
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.74rem;
+}
+
+.category-picker__select:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 2px var(--gold-soft);
+}

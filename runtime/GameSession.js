@@ -11,6 +11,7 @@ const MODE_DEFAULTS = {
 export class GameSession {
   constructor({ level, mode = 'classic', bus, userId = 'default' }) {
     this.level = level;
+    this.progressLevelId = level.progressKey || level.id;
     this.mode = mode;
     this.bus = bus;
     this.userId = userId;
@@ -102,6 +103,8 @@ export class GameSession {
   getSnapshot() {
     return {
       levelId: this.level.id,
+      progressLevelId: this.progressLevelId,
+      packId: this.level.packId || null,
       mode: this.mode,
       elapsedMs: this.elapsedMs,
       score: this.score,
@@ -117,7 +120,7 @@ export class GameSession {
 
   async saveProgress() {
     const snapshot = this.getSnapshot();
-    await this.progressRepo.upsertLevelMode(this.level.id, this.mode, {
+    await this.progressRepo.upsertLevelMode(this.progressLevelId, this.mode, {
       bestScore: snapshot.score,
       bestTimeMs: snapshot.elapsedMs,
       bestMoves: snapshot.moveCount,
@@ -128,7 +131,7 @@ export class GameSession {
     });
 
     await this.sessionRepo.append({
-      levelId: this.level.id,
+      levelId: this.progressLevelId,
       mode: this.mode,
       startedAt: Date.now() - Math.floor(this.elapsedMs),
       endedAt: Date.now(),
@@ -138,7 +141,7 @@ export class GameSession {
   }
 
   async restoreProgress() {
-    const data = await this.progressRepo.getLevelMode(this.level.id, this.mode);
+    const data = await this.progressRepo.getLevelMode(this.progressLevelId, this.mode);
     if (!data?.serialized) return false;
     this.state = PuzzleEngine.deserialize(data.serialized);
     this.score = data.snapshot?.score || 0;

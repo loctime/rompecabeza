@@ -16,7 +16,7 @@ export class AssetManager {
   }
 
   async preload(level) {
-    const key = `level-image:${level.id}`;
+    const key = `level-image:${level.progressKey || level.id}`;
     if (this.cache.has(key)) return this.cache.get(key);
 
     const canvas = await level.image.generate();
@@ -30,8 +30,8 @@ export class AssetManager {
     return canvas;
   }
 
-  async restore(levelId) {
-    const key = `level-image:${levelId}`;
+  async restore(levelCacheId) {
+    const key = `level-image:${levelCacheId}`;
     if (this.cache.has(key)) return this.cache.get(key);
     const blob = await getAsset(key);
     if (!blob) return null;

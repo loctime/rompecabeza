@@ -19,6 +19,7 @@ const levelManager = new LevelManager({
   localProvider,
   queueMin: 4,
   queueTarget: 10,
+  infinitePackId: 'infinito',
 });
 
 let session;
@@ -33,17 +34,55 @@ let boardScaleCleanup = null;
 let lastPiecePlacedInfo = null;
 let completionAAAStarted = false;
 
-const CLASSIC_PACK_ID = 'clasico';
-const CLASSIC_LEVEL_COUNT = 50;
+const INFINITE_PACK_ID = 'infinito';
+const DEFAULT_CATEGORY_ID = 'variado';
 
 /** 'daily' | 'classic' | 'infinite' */
 let currentMode = 'classic';
+let currentPackId = DEFAULT_CATEGORY_ID;
 
 const levelGridEl = document.getElementById('level-grid');
-const gameAreaEl = document.getElementById('game-area');
 const boardContainerEl = document.getElementById('board-container');
 const boardWrapEl = document.getElementById('board-wrap');
 const backGameBtn = document.getElementById('back-levels-btn');
+const levelsTitleEl = document.getElementById('levels-title');
+const categorySelectHomeEl = document.getElementById('category-select-home');
+const categorySelectLevelsEl = document.getElementById('category-select-levels');
+
+function getPlayablePacks() {
+  return levelManager.listPlayablePacks();
+}
+
+function getPackName(packId) {
+  const pack = levelManager.listPacks().find((p) => p.id === packId);
+  return pack?.name || packId;
+}
+
+function getSelectedPackIdOrFallback(packId) {
+  const packs = getPlayablePacks();
+  if (!packs.length) return DEFAULT_CATEGORY_ID;
+  return packs.some((p) => p.id === packId) ? packId : packs[0].id;
+}
+
+function syncCategorySelectors() {
+  if (categorySelectHomeEl) categorySelectHomeEl.value = currentPackId;
+  if (categorySelectLevelsEl) categorySelectLevelsEl.value = currentPackId;
+}
+
+function updateLevelsTitle() {
+  if (!levelsTitleEl) return;
+  levelsTitleEl.textContent = `Elige nivel - ${getPackName(currentPackId)}`;
+}
+
+async function setCurrentPackId(packId, { rerenderLevels = false } = {}) {
+  currentPackId = getSelectedPackIdOrFallback(packId);
+  syncCategorySelectors();
+  updateLevelsTitle();
+  await store.setSetting('selectedPackId', currentPackId);
+  if (rerenderLevels && document.body.dataset.view === 'levels') {
+    renderLevelGrid();
+  }
+}
 
 function showHome() {
   document.body.dataset.view = 'home';
@@ -55,13 +94,14 @@ function showLevelGrid() {
   document.body.dataset.view = 'levels';
   currentMode = 'classic';
   currentLevelId = null;
-  if (backGameBtn) backGameBtn.textContent = '← Atrás';
+  if (backGameBtn) backGameBtn.textContent = '? Atras';
+  updateLevelsTitle();
 }
 
 function showGame() {
   document.body.dataset.view = 'game';
   if (backGameBtn) {
-    backGameBtn.textContent = currentMode === 'classic' ? '← Niveles' : '← Inicio';
+    backGameBtn.textContent = currentMode === 'classic' ? '? Niveles' : '? Inicio';
   }
 }
 
@@ -85,9 +125,7 @@ function teardown() {
 
 function getNextLevelForClassic() {
   if (!currentLevel?.id) return null;
-  const num = parseInt(currentLevel.id.replace('nivel-', ''), 10);
-  if (num >= CLASSIC_LEVEL_COUNT) return null;
-  return levelManager.getLevelFromPack(CLASSIC_PACK_ID, num);
+  return levelManager.getNextLevelInPack(currentPackId, currentLevel.id);
 }
 
 function showBlackOverlay() {
@@ -165,11 +203,13 @@ async function boot(level) {
   if (!level) return;
   teardown();
   showGame();
-  const image = await assetManager.preload(level) || await assetManager.restore(level.id) || await level.image.generate();
+
+  const levelCacheId = level.progressKey || `${level.packId || 'legacy'}:${level.id}`;
+  const image = await assetManager.preload(level) || await assetManager.restore(levelCacheId) || await level.image.generate();
   const sliced = assetManager.buildPieces(image, level.board.cols, level.board.rows);
   pieceCanvases = sliced.pieces.map((p) => p.canvas);
 
-  session = new GameSession({ level, mode: 'classic', bus, userId: 'default' });
+  session = new GameSession({ level, mode: currentMode, bus, userId: 'default' });
   await session.restoreProgress();
 
   document.body.dataset.hideBoardBorders = store.state.settings.hideBoardBorders ? 'true' : 'false';
@@ -197,8 +237,8 @@ async function boot(level) {
 
   boardUI = new BoardUI({
     wrapEl,
-    ghostEl: ghostEl,
-    hoverEl: hoverEl,
+    ghostEl,
+    hoverEl,
     gridOverlayEl,
     boardW: level.board.boardW,
     boardH: level.board.boardH,
@@ -251,7 +291,7 @@ async function boot(level) {
     const nextLevelClassic = currentMode === 'classic' ? getNextLevelForClassic() : null;
     const hasNextLevel = currentMode === 'infinite' ? true : !!nextLevelClassic;
     const onNextLevel = currentMode === 'infinite'
-      ? () => levelManager.nextInfiniteLevel(CLASSIC_PACK_ID).then((next) => transitionToLevel(next))
+      ? () => levelManager.nextInfiniteLevel(currentPackId).then((next) => transitionToLevel(next))
       : () => transitionToLevel(nextLevelClassic);
 
     boardUI.playCompletionAAA(stats, { lastPlacedPositions: lastPositions, lastPlacedPieceIds: lastIds })
@@ -284,8 +324,9 @@ async function boot(level) {
   }));
   unsubscribers.push(bus.on(EVENTS.TIMER_TICK, () => hud.update(session.getSnapshot())));
   unsubscribers.push(bus.on(EVENTS.SESSION_END, async (payload) => {
-    await store.markLevelResult(payload.levelId, payload.mode, {
-      bestScore: Math.max(store.state.progress[payload.levelId]?.bestScore || 0, payload.score),
+    const progressId = payload.progressLevelId || payload.levelId;
+    await store.markLevelResult(progressId, payload.mode, {
+      bestScore: Math.max(store.state.progress[progressId]?.bestScore || 0, payload.score),
       solved: payload.reason === 'win',
     });
     if (document.body.dataset.view === 'levels') {
@@ -300,24 +341,24 @@ async function boot(level) {
 
 async function startDaily() {
   currentMode = 'daily';
-  const level = levelManager.getDailyLevel(CLASSIC_PACK_ID);
+  const level = levelManager.getDailyLevel(currentPackId);
   if (level) await boot(level);
 }
 
 async function startInfinite() {
   currentMode = 'infinite';
-  const level = await levelManager.nextInfiniteLevel(CLASSIC_PACK_ID);
+  levelManager.resetInfiniteProgress();
+  await levelManager.refillQueue();
+  const level = await levelManager.nextInfiniteLevel(currentPackId);
   if (level) await boot(level);
 }
 
 function renderLevelGrid() {
   levelGridEl.innerHTML = '';
-  const packs = levelManager.listPacks();
-  const clasico = packs.find((p) => p.id === CLASSIC_PACK_ID);
-  const count = clasico?.count ?? CLASSIC_LEVEL_COUNT;
+  const count = levelManager.getPackLevelCount(currentPackId);
 
   for (let i = 0; i < count; i++) {
-    const level = levelManager.getLevelFromPack(CLASSIC_PACK_ID, i);
+    const level = levelManager.getLevelFromPack(currentPackId, i);
     if (!level) continue;
 
     const card = document.createElement('button');
@@ -325,14 +366,15 @@ function renderLevelGrid() {
     card.className = 'level-card';
     card.dataset.levelId = level.id;
 
-    const num = level.id.replace('nivel-', '');
+    const num = String(i + 1).padStart(2, '0');
     card.dataset.levelNum = num;
 
-    const isCompleted = store.state.progress[level.id]?.solved;
+    const progressKey = level.progressKey || level.id;
+    const isCompleted = store.state.progress[progressKey]?.solved;
     if (isCompleted) card.classList.add('revealed');
 
-    const imgSrc = level._imageUrl || `./assets/levels/${level.id}.jpg`;
-    const stars = '★'.repeat(level.meta?.difficulty ?? 1);
+    const imgSrc = level._imageUrl || './assets/levels/nivel-01.jpg';
+    const stars = '?'.repeat(level.meta?.difficulty ?? 1);
     card.innerHTML = `
       <img src="${imgSrc}" alt="" loading="lazy" />
       <span class="level-num">${num}</span>
@@ -344,12 +386,43 @@ function renderLevelGrid() {
   }
 }
 
+function populateCategorySelectors() {
+  const packs = getPlayablePacks();
+  const selects = [categorySelectHomeEl, categorySelectLevelsEl].filter(Boolean);
+
+  selects.forEach((selectEl) => {
+    selectEl.innerHTML = '';
+    packs.forEach((pack) => {
+      const option = document.createElement('option');
+      option.value = pack.id;
+      option.textContent = pack.name || pack.id;
+      selectEl.appendChild(option);
+    });
+  });
+
+  syncCategorySelectors();
+}
+
 async function init() {
   store.setUser('default');
   await store.hydrate();
   await levelManager.init();
+
+  populateCategorySelectors();
+  currentPackId = getSelectedPackIdOrFallback(store.state.settings.selectedPackId || DEFAULT_CATEGORY_ID);
+  syncCategorySelectors();
+  updateLevelsTitle();
+
   document.body.dataset.view = 'home';
   document.body.dataset.hideBoardBorders = store.state.settings.hideBoardBorders !== true ? 'false' : 'true';
+
+  categorySelectHomeEl?.addEventListener('change', async (event) => {
+    await setCurrentPackId(event.target.value);
+  });
+
+  categorySelectLevelsEl?.addEventListener('change', async (event) => {
+    await setCurrentPackId(event.target.value, { rerenderLevels: true });
+  });
 
   document.getElementById('mode-daily').addEventListener('click', () => startDaily());
   document.getElementById('mode-clasico').addEventListener('click', () => {

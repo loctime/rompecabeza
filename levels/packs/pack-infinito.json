@@ -1,0 +1,27 @@
+{
+  "id": "infinito",
+  "name": "Infinito",
+  "coverImage": "/assets/levels/infinito/infinito-01.jpg",
+  "levels": [
+    { "id": "infinito-01", "image": "/assets/levels/infinito/infinito-01.jpg", "grid": 3, "theme": "infinito", "title": "Infinito 1", "difficulty": 1 },
+    { "id": "infinito-02", "image": "/assets/levels/infinito/infinito-02.jpg", "grid": 4, "theme": "infinito", "title": "Infinito 2", "difficulty": 2 },
+    { "id": "infinito-03", "image": "/assets/levels/infinito/infinito-03.jpg", "grid": 5, "theme": "infinito", "title": "Infinito 3", "difficulty": 3 },
+    { "id": "infinito-04", "image": "/assets/levels/infinito/infinito-04.jpg", "grid": 6, "theme": "infinito", "title": "Infinito 4", "difficulty": 4 },
+    { "id": "infinito-05", "image": "/assets/levels/infinito/infinito-05.jpg", "grid": 7, "theme": "infinito", "title": "Infinito 5", "difficulty": 5 },
+    { "id": "infinito-06", "image": "/assets/levels/infinito/infinito-06.jpg", "grid": 3, "theme": "infinito", "title": "Infinito 6", "difficulty": 1 },
+    { "id": "infinito-07", "image": "/assets/levels/infinito/infinito-07.jpg", "grid": 4, "theme": "infinito", "title": "Infinito 7", "difficulty": 2 },
+    { "id": "infinito-08", "image": "/assets/levels/infinito/infinito-08.jpg", "grid": 5, "theme": "infinito", "title": "Infinito 8", "difficulty": 3 },
+    { "id": "infinito-09", "image": "/assets/levels/infinito/infinito-09.jpg", "grid": 6, "theme": "infinito", "title": "Infinito 9", "difficulty": 4 },
+    { "id": "infinito-10", "image": "/assets/levels/infinito/infinito-10.jpg", "grid": 7, "theme": "infinito", "title": "Infinito 10", "difficulty": 5 },
+    { "id": "infinito-11", "image": "/assets/levels/infinito/infinito-11.jpg", "grid": 3, "theme": "infinito", "title": "Infinito 11", "difficulty": 1 },
+    { "id": "infinito-12", "image": "/assets/levels/infinito/infinito-12.jpg", "grid": 4, "theme": "infinito", "title": "Infinito 12", "difficulty": 2 },
+    { "id": "infinito-13", "image": "/assets/levels/infinito/infinito-13.jpg", "grid": 5, "theme": "infinito", "title": "Infinito 13", "difficulty": 3 },
+    { "id": "infinito-14", "image": "/assets/levels/infinito/infinito-14.jpg", "grid": 6, "theme": "infinito", "title": "Infinito 14", "difficulty": 4 },
+    { "id": "infinito-15", "image": "/assets/levels/infinito/infinito-15.jpg", "grid": 7, "theme": "infinito", "title": "Infinito 15", "difficulty": 5 },
+    { "id": "infinito-16", "image": "/assets/levels/infinito/infinito-16.jpg", "grid": 3, "theme": "infinito", "title": "Infinito 16", "difficulty": 1 },
+    { "id": "infinito-17", "image": "/assets/levels/infinito/infinito-17.jpg", "grid": 4, "theme": "infinito", "title": "Infinito 17", "difficulty": 2 },
+    { "id": "infinito-18", "image": "/assets/levels/infinito/infinito-18.jpg", "grid": 5, "theme": "infinito", "title": "Infinito 18", "difficulty": 3 },
+    { "id": "infinito-19", "image": "/assets/levels/infinito/infinito-19.jpg", "grid": 6, "theme": "infinito", "title": "Infinito 19", "difficulty": 4 },
+    { "id": "infinito-20", "image": "/assets/levels/infinito/infinito-20.jpg", "grid": 7, "theme": "infinito", "title": "Infinito 20", "difficulty": 5 }
+  ]
+}

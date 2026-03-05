@@ -59,11 +59,13 @@ export class LevelManager {
     remoteProvider = null,
     queueMin = 4,
     queueTarget = 10,
+    infinitePackId = 'infinito',
   } = {}) {
     this.localProvider = localProvider;
     this.remoteProvider = remoteProvider;
     this.queueMin = queueMin;
     this.queueTarget = queueTarget;
+    this.infinitePackId = infinitePackId;
     this.queue = [];
     this._infiniteIndex = 0;
   }
@@ -84,21 +86,52 @@ export class LevelManager {
     return this.localProvider.listPacks();
   }
 
-  getLevelFromPack(packId, index) {
-    const base = this.localProvider.getLevel(packId, index);
-    return base ? decorateLevelToEngineFormat(base) : null;
+  listPlayablePacks() {
+    return this.listPacks().filter((p) => p.id !== this.infinitePackId);
   }
 
-  getDailyLevel(packId = 'clasico') {
+  getPackLevelCount(packId) {
+    const pack = this.localProvider.getPack(packId);
+    return pack?.levels?.length ?? 0;
+  }
+
+  getLevelFromPack(packId, index) {
+    const base = this.localProvider.getLevel(packId, index);
+    return base ? decorateLevelToEngineFormat({
+      ...base,
+      packId,
+      progressKey: `${packId}:${base.id}`,
+    }) : null;
+  }
+
+  getNextLevelInPack(packId, currentLevelId) {
+    const pack = this.localProvider.getPack(packId);
+    const levels = pack?.levels || [];
+    if (!levels.length) return null;
+    const idx = levels.findIndex((l) => l.id === currentLevelId);
+    if (idx < 0 || idx + 1 >= levels.length) return null;
+    const base = levels[idx + 1];
+    return decorateLevelToEngineFormat({
+      ...base,
+      packId,
+      progressKey: `${packId}:${base.id}`,
+    });
+  }
+
+  getDailyLevel(packId = 'variado') {
     const pack = this.localProvider.getPack(packId);
     if (!pack?.levels?.length) return null;
     const dayKey = DailyChallenge.todayKey();
     const idx = DailyChallenge.pickIndex(dayKey + '|' + packId, pack.levels.length);
     const base = pack.levels[idx];
-    return base ? decorateLevelToEngineFormat({ ...base }) : null;
+    return base ? decorateLevelToEngineFormat({
+      ...base,
+      packId,
+      progressKey: `${packId}:${base.id}`,
+    }) : null;
   }
 
-  async nextInfiniteLevel(packIdFallback = 'clasico') {
+  async nextInfiniteLevel(packIdFallback = 'variado') {
     if (this.queue.length <= this.queueMin) {
       this.refillQueue().catch(() => {});
     }
@@ -116,8 +149,13 @@ export class LevelManager {
     return decorateLevelToEngineFormat(base);
   }
 
+  resetInfiniteProgress() {
+    this.queue = [];
+    this._infiniteIndex = 0;
+  }
+
   async refillQueue() {
-    const packId = 'clasico';
+    const packId = this.infinitePackId;
     const pack = this.localProvider.getPack(packId);
     const count = pack?.levels?.length ?? 0;
 
@@ -126,7 +164,11 @@ export class LevelManager {
         const base = this.localProvider.getLevel(packId, this._infiniteIndex);
         this._infiniteIndex += 1;
         if (base) {
-          this.queue.push({ ...base });
+          this.queue.push({
+            ...base,
+            packId,
+            progressKey: `${packId}:${base.id}`,
+          });
           const url = base.image;
           if (url) ImageCache.warm([url], { concurrency: 1 }).catch(() => {});
         }
