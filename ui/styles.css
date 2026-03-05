@@ -334,33 +334,50 @@ body[data-view="game"] {
   z-index: 11;
 }
 
-/* Barra inferior fija: Niveles, estado, Mezclar (siempre visible en móvil) */
+/* Barra inferior compacta: Niveles (izq) | datos (centro) | Mezclar (der) — una sola línea */
 .game-bottom-bar {
-  --game-bottom-bar-height: 52px;
+  --game-bottom-bar-height: 40px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: nowrap;
   width: 100%;
   min-height: var(--game-bottom-bar-height);
-  padding: 10px 0 0;
-  padding-bottom: env(safe-area-inset-bottom, 0);
+  padding: 6px 0 4px;
+  padding-bottom: max(4px, env(safe-area-inset-bottom, 0));
 }
 
 .game-bottom-bar .nav-btn--game {
   margin-bottom: 0;
+  padding: 6px 10px;
+  font-size: 0.65rem;
+  flex-shrink: 0;
+}
+
+.game-bottom-bar .game-status {
+  flex: 0 1 auto;
+  min-width: 0;
+  font-size: 0.6rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .game-status {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   color: var(--text-dim);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  height: 18px;
   text-align: center;
-  flex: 0 0 auto;
+}
+
+.game-bottom-bar .shuffle-btn {
+  padding: 6px 12px;
+  font-size: 0.65rem;
+  flex-shrink: 0;
 }
 
 .shuffle-btn {
