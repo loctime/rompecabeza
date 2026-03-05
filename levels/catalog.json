@@ -1,10 +1,32 @@
 {
   "packs": [
-    { "id": "animales", "manifest": "/levels/packs/pack-animales.json" },
-    { "id": "paisajes", "manifest": "/levels/packs/pack-paisajes.json" },
-    { "id": "comidas", "manifest": "/levels/packs/pack-comidas.json" },
-    { "id": "cosas", "manifest": "/levels/packs/pack-cosas.json" },
-    { "id": "variado", "manifest": "/levels/packs/pack-variado.json" },
-    { "id": "infinito", "manifest": "/levels/packs/pack-infinito.json" }
+    {
+      "id": "animales",
+      "manifest": "/levels/packs/pack-animales.json"
+    },
+    {
+      "id": "paisajes",
+      "manifest": "/levels/packs/pack-paisajes.json"
+    },
+    {
+      "id": "comidas",
+      "manifest": "/levels/packs/pack-comidas.json"
+    },
+    {
+      "id": "cosas",
+      "manifest": "/levels/packs/pack-cosas.json"
+    },
+    {
+      "id": "variado",
+      "manifest": "/levels/packs/pack-variado.json"
+    },
+    {
+      "id": "infinito",
+      "manifest": "/levels/packs/pack-infinito.json"
+    },
+    {
+      "id": "anime",
+      "manifest": "/levels/packs/pack-anime.json"
+    }
   ]
 }

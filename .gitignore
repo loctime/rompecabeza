@@ -1,4 +1,4 @@
-# OS
+﻿# OS
 .DS_Store
 Thumbs.db
 
@@ -13,6 +13,11 @@ Thumbs.db
 *.log
 npm-debug.log*
 
-# Env (si añades variables)
+# Env (si aÃ±ades variables)
 .env
 .env.local
+
+# Env variants
+.env.*
+!.env.example
+
