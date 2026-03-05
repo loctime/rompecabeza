@@ -1,6 +1,175 @@
 {
-  "id": "anime",
-  "name": "Anime",
-  "coverImage": "/assets/levels/anime/anime-01.jpg",
-  "levels": []
+    "id":  "anime",
+    "name":  "Anime",
+    "coverImage":  "/assets/levels/anime/anime-01.jpg",
+    "levels":  [
+                   {
+                       "id":  "anime-01",
+                       "image":  "/assets/levels/anime/anime-01.jpg",
+                       "grid":  3,
+                       "theme":  "anime",
+                       "title":  "Anime 1",
+                       "difficulty":  1
+                   },
+                   {
+                       "id":  "anime-02",
+                       "image":  "/assets/levels/anime/anime-02.jpg",
+                       "grid":  4,
+                       "theme":  "anime",
+                       "title":  "Anime 2",
+                       "difficulty":  2
+                   },
+                   {
+                       "id":  "anime-03",
+                       "image":  "/assets/levels/anime/anime-03.jpg",
+                       "grid":  5,
+                       "theme":  "anime",
+                       "title":  "Anime 3",
+                       "difficulty":  3
+                   },
+                   {
+                       "id":  "anime-04",
+                       "image":  "/assets/levels/anime/anime-04.jpg",
+                       "grid":  6,
+                       "theme":  "anime",
+                       "title":  "Anime 4",
+                       "difficulty":  4
+                   },
+                   {
+                       "id":  "anime-05",
+                       "image":  "/assets/levels/anime/anime-05.jpg",
+                       "grid":  7,
+                       "theme":  "anime",
+                       "title":  "Anime 5",
+                       "difficulty":  5
+                   },
+                   {
+                       "id":  "anime-06",
+                       "image":  "/assets/levels/anime/anime-06.jpg",
+                       "grid":  3,
+                       "theme":  "anime",
+                       "title":  "Anime 6",
+                       "difficulty":  1
+                   },
+                   {
+                       "id":  "anime-07",
+                       "image":  "/assets/levels/anime/anime-07.jpg",
+                       "grid":  4,
+                       "theme":  "anime",
+                       "title":  "Anime 7",
+                       "difficulty":  2
+                   },
+                   {
+                       "id":  "anime-08",
+                       "image":  "/assets/levels/anime/anime-08.jpg",
+                       "grid":  5,
+                       "theme":  "anime",
+                       "title":  "Anime 8",
+                       "difficulty":  3
+                   },
+                   {
+                       "id":  "anime-09",
+                       "image":  "/assets/levels/anime/anime-09.jpg",
+                       "grid":  6,
+                       "theme":  "anime",
+                       "title":  "Anime 9",
+                       "difficulty":  4
+                   },
+                   {
+                       "id":  "anime-10",
+                       "image":  "/assets/levels/anime/anime-10.jpg",
+                       "grid":  7,
+                       "theme":  "anime",
+                       "title":  "Anime 10",
+                       "difficulty":  5
+                   },
+                   {
+                       "id":  "anime-11",
+                       "image":  "/assets/levels/anime/anime-11.jpg",
+                       "grid":  3,
+                       "theme":  "anime",
+                       "title":  "Anime 11",
+                       "difficulty":  1
+                   },
+                   {
+                       "id":  "anime-12",
+                       "image":  "/assets/levels/anime/anime-12.jpg",
+                       "grid":  4,
+                       "theme":  "anime",
+                       "title":  "Anime 12",
+                       "difficulty":  2
+                   },
+                   {
+                       "id":  "anime-13",
+                       "image":  "/assets/levels/anime/anime-13.jpg",
+                       "grid":  5,
+                       "theme":  "anime",
+                       "title":  "Anime 13",
+                       "difficulty":  3
+                   },
+                   {
+                       "id":  "anime-14",
+                       "image":  "/assets/levels/anime/anime-14.jpg",
+                       "grid":  6,
+                       "theme":  "anime",
+                       "title":  "Anime 14",
+                       "difficulty":  4
+                   },
+                   {
+                       "id":  "anime-15",
+                       "image":  "/assets/levels/anime/anime-15.jpg",
+                       "grid":  7,
+                       "theme":  "anime",
+                       "title":  "Anime 15",
+                       "difficulty":  5
+                   },
+                   {
+                       "id":  "anime-16",
+                       "image":  "/assets/levels/anime/anime-16.jpg",
+                       "grid":  3,
+                       "theme":  "anime",
+                       "title":  "Anime 16",
+                       "difficulty":  1
+                   },
+                   {
+                       "id":  "anime-17",
+                       "image":  "/assets/levels/anime/anime-17.jpg",
+                       "grid":  4,
+                       "theme":  "anime",
+                       "title":  "Anime 17",
+                       "difficulty":  2
+                   },
+                   {
+                       "id":  "anime-18",
+                       "image":  "/assets/levels/anime/anime-18.jpg",
+                       "grid":  5,
+                       "theme":  "anime",
+                       "title":  "Anime 18",
+                       "difficulty":  3
+                   },
+                   {
+                       "id":  "anime-19",
+                       "image":  "/assets/levels/anime/anime-19.jpg",
+                       "grid":  6,
+                       "theme":  "anime",
+                       "title":  "Anime 19",
+                       "difficulty":  4
+                   },
+                   {
+                       "id":  "anime-20",
+                       "image":  "/assets/levels/anime/anime-20.jpg",
+                       "grid":  7,
+                       "theme":  "anime",
+                       "title":  "Anime 20",
+                       "difficulty":  5
+                   },
+                   {
+                       "id":  "anime-21",
+                       "image":  "/assets/levels/anime/anime-21.jpg",
+                       "grid":  3,
+                       "theme":  "anime",
+                       "title":  "Anime 21",
+                       "difficulty":  1
+                   }
+               ]
 }

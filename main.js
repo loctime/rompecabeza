@@ -1,4 +1,4 @@
-import { DragController } from './engine/DragController.js';
+﻿import { DragController } from './engine/DragController.js';
 import { BoardUI } from './ui/BoardUI.js';
 import { HUD } from './ui/HUD.js';
 import { AudioManager } from './audio/AudioManager.js';
@@ -370,8 +370,7 @@ function renderLevelGrid() {
     card.dataset.levelNum = num;
 
     const progressKey = level.progressKey || level.id;
-    const isCompleted = store.state.progress[progressKey]?.solved;
-    if (isCompleted) card.classList.add('revealed');
+    card.classList.add('revealed');
 
     const imgSrc = level._imageUrl || './assets/levels/nivel-01.jpg';
     const stars = '?'.repeat(level.meta?.difficulty ?? 1);
@@ -453,3 +452,4 @@ if ('serviceWorker' in navigator) {
 }
 
 init();
+
