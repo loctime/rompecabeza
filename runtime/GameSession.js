@@ -65,7 +65,12 @@ export class GameSession {
       isNowLocked: result.solved,
     }));
     this.bus.emit(EVENTS.PIECE_PLACED, { ...this.getSnapshot(), placed });
-    this.bus.emit(EVENTS.MOVE_APPLIED, { ...this.getSnapshot(), affected: result.affected });
+    this.bus.emit(EVENTS.MOVE_APPLIED, {
+      ...this.getSnapshot(),
+      affected: result.affected,
+      fusionGained: result.fusionGained,
+      placed,
+    });
     if (result.fusionGained) this.bus.emit(EVENTS.FUSION_GAINED, this.getSnapshot());
     if (result.solved) {
       this.completed = true;

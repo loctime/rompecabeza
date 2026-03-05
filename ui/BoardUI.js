@@ -421,6 +421,34 @@ export class BoardUI {
       }
     }
   }
+  playFusionMagnetPulse(groups) {
+    if (!Array.isArray(groups) || !groups.length) return;
+    const animated = new Set();
+
+    groups.forEach((group, gi) => {
+      const delay = gi * 26;
+      group.forEach((pos) => {
+        const cell = this._cellEls[pos];
+        if (!cell || animated.has(cell)) return;
+        animated.add(cell);
+
+        cell.animate(
+          [
+            { transform: 'translate(0,0) scale(1)', filter: 'brightness(1)', offset: 0 },
+            { transform: 'translate(0,0) scale(0.93)', filter: 'brightness(1.06)', offset: 0.28 },
+            { transform: 'translate(0,0) scale(1.08)', filter: 'brightness(1.15)', offset: 0.62 },
+            { transform: 'translate(0,0) scale(1)', filter: 'brightness(1)', offset: 1 },
+          ],
+          {
+            duration: 300,
+            easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+            fill: 'none',
+            delay,
+          },
+        );
+      });
+    });
+  }
   buildGroupCanvas(group, session) {
     const rs = group.map((p) => Math.floor(p / session.state.cols));
     const cs = group.map((p) => p % session.state.cols);

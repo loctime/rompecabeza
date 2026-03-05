@@ -1,4 +1,4 @@
-﻿import { DragController } from './engine/DragController.js';
+import { DragController } from './engine/DragController.js';
 import { BoardUI } from './ui/BoardUI.js';
 import { HUD } from './ui/HUD.js';
 import { AudioManager } from './audio/AudioManager.js';
@@ -190,6 +190,20 @@ function applyBoardScale(boardW, boardH) {
   boardContainerEl.style.height = boardH * scale + 'px';
 }
 
+function getFusionPulseGroups(session, affected = []) {
+  if (!session || !Array.isArray(affected) || !affected.length) return [];
+  const fused = session.getFusedEdges();
+  const seen = new Set();
+  const groups = [];
+
+  for (const pos of affected) {
+    if (seen.has(pos)) continue;
+    const group = session.getGroup(pos, fused);
+    group.forEach((p) => seen.add(p));
+    if (group.length >= 2) groups.push(group);
+  }
+  return groups;
+}
 function setupBoardScale(level) {
   boardScaleCleanup?.();
   const { boardW, boardH } = level.board;
@@ -272,9 +286,15 @@ async function boot(level) {
     lastPiecePlacedInfo = payload;
   }));
   unsubscribers.push(bus.on(EVENTS.MOVE_REJECTED, () => audio.play('invalid')));
-  unsubscribers.push(bus.on(EVENTS.MOVE_APPLIED, ({ affected }) => {
+  unsubscribers.push(bus.on(EVENTS.MOVE_APPLIED, ({ affected, fusionGained }) => {
     boardUI.render(session, pieceCanvases, affected);
     hud.update(session.getSnapshot());
+
+    if (fusionGained) {
+      audio.play('fuse');
+      const groups = getFusionPulseGroups(session, affected);
+      boardUI.playFusionMagnetPulse(groups);
+    }
   }));
   unsubscribers.push(bus.on(EVENTS.PUZZLE_COMPLETED, (stats) => {
     if (completionAAAStarted) return;
