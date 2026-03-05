@@ -93,10 +93,19 @@ export class DragController {
     const rows = group.map((p) => Math.floor(p / this.session.state.cols));
     const minC = Math.min(...cols), minR = Math.min(...rows);
     const dc = col - minC, dr = row - minR;
-    const positions = group.map((p) =>
-      (Math.floor(p / this.session.state.cols) + dr) * this.session.state.cols + (p % this.session.state.cols + dc)
+    const translated = group.map((p) => ({
+      targetRow: Math.floor(p / this.session.state.cols) + dr,
+      targetCol: (p % this.session.state.cols) + dc,
+    }));
+    const valid = translated.every(({ targetRow, targetCol }) => (
+      targetRow >= 0
+      && targetRow < this.session.state.rows
+      && targetCol >= 0
+      && targetCol < this.session.state.cols
+    ));
+    const positions = translated.map(({ targetRow, targetCol }) =>
+      targetRow * this.session.state.cols + targetCol
     );
-    const valid = positions.every((np) => np >= 0 && np < this.session.state.total);
     this.boardUI.showHover(valid ? positions : [], this.session);
   }
 

@@ -90,17 +90,21 @@ export function applyMove(state, originPos, destCol, destRow) {
     return { moved: false, state, fusionGained: false, solved: isSolved(state), affected: [] };
   }
 
-  const newPos = group.map((p) =>
-    (Math.floor(p / state.cols) + dr) * state.cols + (p % state.cols + dc)
-  );
+  const translated = group.map((p) => {
+    const sourceRow = Math.floor(p / state.cols);
+    const sourceCol = p % state.cols;
+    const targetRow = sourceRow + dr;
+    const targetCol = sourceCol + dc;
+    return { targetRow, targetCol };
+  });
 
-  for (const np of newPos) {
-    const nr = Math.floor(np / state.cols);
-    const nc = np % state.cols;
-    if (np < 0 || np >= state.total || nr < 0 || nr >= state.rows || nc < 0 || nc >= state.cols) {
+  for (const { targetRow, targetCol } of translated) {
+    if (targetRow < 0 || targetRow >= state.rows || targetCol < 0 || targetCol >= state.cols) {
       return { moved: false, state, fusionGained: false, solved: isSolved(state), affected: [] };
     }
   }
+
+  const newPos = translated.map(({ targetRow, targetCol }) => targetRow * state.cols + targetCol);
 
   const prevFused = fused.size;
   const board = [...state.board];

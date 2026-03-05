@@ -22,3 +22,10 @@ test('isSolved true for initial board', () => {
   const state = PuzzleEngine.createInitialState({ cols: 2, rows: 2 });
   assert.equal(PuzzleEngine.isSolved(state), true);
 });
+
+test('applyMove rejects horizontal wrap outside board bounds', () => {
+  const state = PuzzleEngine.createInitialState({ cols: 3, rows: 2 });
+  const result = PuzzleEngine.applyMove(state, 2, 3, 0);
+  assert.equal(result.moved, false);
+  assert.deepEqual(result.state.board, state.board);
+});
