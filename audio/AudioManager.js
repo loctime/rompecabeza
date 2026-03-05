@@ -3,30 +3,21 @@
  *
  * Manages all game audio using the Web Audio API (no external files needed).
  * Sounds are synthesized procedurally so the game works offline.
- *
- * Usage:
- *   const audio = new AudioManager();
- *   audio.play('move');   // soft click on piece swap
- *   audio.play('fuse');   // satisfying chime when pieces fuse
- *   audio.play('win');    // fanfare on puzzle complete
- *
- * To add a sound: add an entry to this._sounds map.
- * To use audio files instead: replace _synth() with fetch + decodeAudioData.
  */
 
 export class AudioManager {
   constructor() {
-    this._ctx    = null;
-    this._muted  = false;
+    this._ctx = null;
+    this._sfxOut = null;
+    this._sfxVolume = 0.9;
+    this._muted = false;
     this._sounds = {
       move: (ctx) => this._synthMove(ctx),
       fuse: (ctx) => this._synthFuse(ctx),
-      win:  (ctx) => this._synthWin(ctx),
+      win: (ctx) => this._synthWin(ctx),
       invalid: (ctx) => this._synthInvalid(ctx),
     };
   }
-
-  // ── Public ──────────────────────────────────────────────────────────────────
 
   /**
    * Play a named sound.
@@ -39,37 +30,39 @@ export class AudioManager {
     try {
       const ctx = this._getContext();
       fn(ctx);
-    } catch (e) {
-      // Audio context may be blocked until user interaction — fail silently
+    } catch (_) {
+      // Audio context may be blocked until user interaction.
     }
   }
 
-  /** Chime suave + subgrave sutil para victoria (secuencia AAA). */
+  /** Soft victory chime. */
   playVictoryChime() {
     if (this._muted) return;
     try {
       const ctx = this._getContext();
       this._synthVictoryChime(ctx);
-    } catch (e) {}
+    } catch (_) {}
   }
 
-  /** Click de encaje para últimas piezas. intensity en [0,1] modula ganancia/duración. */
+  /** Soft snap tick; intensity in [0,1] changes gain/duration. */
   playSnapTick(intensity = 0.7) {
     if (this._muted) return;
     try {
       const ctx = this._getContext();
       this._synthSnapTick(ctx, Math.max(0.1, Math.min(1, intensity)));
-    } catch (e) {}
+    } catch (_) {}
   }
 
-  mute()   { this._muted = true; }
+  mute() { this._muted = true; }
   unmute() { this._muted = false; }
   toggle() { this._muted = !this._muted; }
 
-  /**
-   * Warmup del AudioContext con user gesture (llamar en primer click/touch).
-   * Necesario en iOS/Chrome por políticas de autoplay.
-   */
+  setVolume(value) {
+    this._sfxVolume = Math.max(0, Math.min(1, Number(value) || 0));
+    if (this._sfxOut) this._sfxOut.gain.value = this._sfxVolume;
+  }
+
+  /** Warmup AudioContext with user gesture. */
   warmup() {
     try {
       const ctx = this._getContext();
@@ -78,8 +71,6 @@ export class AudioManager {
       }
     } catch (_) {}
   }
-
-  // ── Private: context ────────────────────────────────────────────────────────
 
   _getContext() {
     if (!this._ctx) {
@@ -91,15 +82,21 @@ export class AudioManager {
     return this._ctx;
   }
 
-  // ── Private: synth helpers ──────────────────────────────────────────────────
+  _getSfxOutput(ctx) {
+    if (!this._sfxOut) {
+      this._sfxOut = ctx.createGain();
+      this._sfxOut.gain.value = this._sfxVolume;
+      this._sfxOut.connect(ctx.destination);
+    }
+    return this._sfxOut;
+  }
 
-  /** Sonido cuando el movimiento no es válido (Plan Maestro FASE 2: INVALID). */
   _synthInvalid(ctx) {
     const t0 = ctx.currentTime;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this._getSfxOutput(ctx));
     osc.type = 'sine';
     osc.frequency.setValueAtTime(180, t0);
     osc.frequency.exponentialRampToValueAtTime(120, t0 + 0.06);
@@ -109,14 +106,13 @@ export class AudioManager {
     osc.stop(t0 + 0.1);
   }
 
-  /** Short soft click for piece swap */
   _synthMove(ctx) {
-    const osc  = ctx.createOscillator();
+    const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this._getSfxOutput(ctx));
 
-    osc.type      = 'sine';
+    osc.type = 'sine';
     osc.frequency.setValueAtTime(440, ctx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(220, ctx.currentTime + 0.08);
 
@@ -127,14 +123,13 @@ export class AudioManager {
     osc.stop(ctx.currentTime + 0.12);
   }
 
-  /** Warm chime for fusion */
   _synthFuse(ctx) {
-    const freqs = [523.25, 659.25, 783.99]; // C5, E5, G5
+    const freqs = [523.25, 659.25, 783.99];
     freqs.forEach((freq, i) => {
-      const osc  = ctx.createOscillator();
+      const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(this._getSfxOutput(ctx));
 
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.05);
@@ -148,15 +143,14 @@ export class AudioManager {
     });
   }
 
-  /** Chime suave y acogedor para victoria (no brusco, sensación de recompensa). */
   _synthVictoryChime(ctx) {
     const t0 = ctx.currentTime;
-    const freqs = [523.25, 659.25, 783.99]; // C5, E5, G5 — acorde mayor suave
+    const freqs = [523.25, 659.25, 783.99];
     freqs.forEach((freq, i) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(this._getSfxOutput(ctx));
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, t0 + i * 0.06);
       gain.gain.setValueAtTime(0, t0 + i * 0.06);
@@ -165,10 +159,11 @@ export class AudioManager {
       osc.start(t0 + i * 0.06);
       osc.stop(t0 + i * 0.06 + 0.5);
     });
+
     const sub = ctx.createOscillator();
     const subGain = ctx.createGain();
     sub.connect(subGain);
-    subGain.connect(ctx.destination);
+    subGain.connect(this._getSfxOutput(ctx));
     sub.type = 'sine';
     sub.frequency.setValueAtTime(130.81, t0);
     subGain.gain.setValueAtTime(0, t0);
@@ -178,13 +173,12 @@ export class AudioManager {
     sub.stop(t0 + 0.45);
   }
 
-  /** Click muy suave de encaje; intensity modula ganancia (0.1–1). */
   _synthSnapTick(ctx, intensity) {
     const t0 = ctx.currentTime;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this._getSfxOutput(ctx));
     osc.type = 'sine';
     osc.frequency.setValueAtTime(520, t0);
     osc.frequency.exponentialRampToValueAtTime(260, t0 + 0.05);
@@ -194,7 +188,6 @@ export class AudioManager {
     osc.stop(t0 + 0.08);
   }
 
-  /** Fanfarria suave y ascendente para win (agradable, no estridente). */
   _synthWin(ctx) {
     const t0 = ctx.currentTime;
     const notes = [
@@ -207,7 +200,7 @@ export class AudioManager {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain);
-      gain.connect(ctx.destination);
+      gain.connect(this._getSfxOutput(ctx));
       osc.type = 'sine';
       osc.frequency.setValueAtTime(freq, t0 + t);
       gain.gain.setValueAtTime(0, t0 + t);

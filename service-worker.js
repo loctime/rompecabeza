@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DATA_CACHE = `data-${CACHE_VERSION}`;
 const NAV_CACHE = `nav-${CACHE_VERSION}`;
@@ -10,7 +10,8 @@ const STATIC_ALLOWLIST = [
   './engine/PuzzleEngine.js', './engine/DragController.js',
   './runtime/GameSession.js', './runtime/AssetManager.js', './runtime/store.js', './runtime/events.js',
   './storage/persistence.js', './data/levels.js',
-  './audio/AudioEngine.js', './audio/SfxBank.js', './audio/MusicController.js',
+  './audio/AudioManager.js', './audio/AudioEngine.js', './audio/SfxBank.js', './audio/MusicController.js',
+  './audio/music/home.mp3', './audio/music/daily.mp3', './audio/music/classic.mp3', './audio/music/infinite.mp3',
   './levels/mountainNight.js', './manifest.json',
   './icons/icon-192.png', './icons/icon-512.png'
 ];

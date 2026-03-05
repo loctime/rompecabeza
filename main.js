@@ -2,6 +2,7 @@ import { DragController } from './engine/DragController.js';
 import { BoardUI } from './ui/BoardUI.js';
 import { HUD } from './ui/HUD.js';
 import { AudioManager } from './audio/AudioManager.js';
+import { MusicController } from './audio/MusicController.js';
 import { EventBus, EVENTS } from './runtime/events.js';
 import { GameSession } from './runtime/GameSession.js';
 import { AssetManager } from './runtime/AssetManager.js';
@@ -13,6 +14,7 @@ const bus = new EventBus();
 const assetManager = new AssetManager();
 const store = new AppStore();
 const audio = new AudioManager();
+const music = new MusicController();
 
 const localProvider = new LocalPackProvider({ catalogUrl: '/levels/catalog.json' });
 const levelManager = new LevelManager({
@@ -48,6 +50,81 @@ const backGameBtn = document.getElementById('back-levels-btn');
 const levelsTitleEl = document.getElementById('levels-title');
 const categorySelectHomeEl = document.getElementById('category-select-home');
 const categorySelectLevelsEl = document.getElementById('category-select-levels');
+
+function clamp01(value) {
+  return Math.max(0, Math.min(1, Number(value) || 0));
+}
+
+async function setMuteMuted(muted) {
+  await store.setSetting('mute', muted);
+  if (muted) {
+    audio.mute();
+    music.setVolume(0);
+    return;
+  }
+  audio.unmute();
+  music.setVolume(store.state.settings.musicVolume);
+}
+
+async function setMusicVolume(value) {
+  const next = clamp01(value);
+  await store.setSetting('musicVolume', next);
+  if (!store.state.settings.mute) music.setVolume(next);
+}
+
+async function setSfxVolume(value) {
+  const next = clamp01(value);
+  await store.setSetting('sfxVolume', next);
+  audio.setVolume(next);
+}
+
+function applyAudioSettings() {
+  audio.setVolume(store.state.settings.sfxVolume);
+  if (store.state.settings.mute) {
+    audio.mute();
+    music.setVolume(0);
+    return;
+  }
+  audio.unmute();
+  music.setVolume(store.state.settings.musicVolume);
+}
+
+function setupAudioHotkeys() {
+  window.addEventListener('keydown', async (event) => {
+    const target = event.target;
+    const tag = target?.tagName?.toLowerCase?.();
+    if (tag === 'input' || tag === 'textarea' || tag === 'select' || target?.isContentEditable) return;
+
+    if (event.key === 'm' || event.key === 'M') {
+      event.preventDefault();
+      await setMuteMuted(!store.state.settings.mute);
+      return;
+    }
+
+    if (event.key === '[') {
+      event.preventDefault();
+      await setMusicVolume(store.state.settings.musicVolume - 0.1);
+      return;
+    }
+
+    if (event.key === ']') {
+      event.preventDefault();
+      await setMusicVolume(store.state.settings.musicVolume + 0.1);
+      return;
+    }
+
+    if (event.key === '-' || event.key === '_') {
+      event.preventDefault();
+      await setSfxVolume(store.state.settings.sfxVolume - 0.1);
+      return;
+    }
+
+    if (event.key === '=' || event.key === '+') {
+      event.preventDefault();
+      await setSfxVolume(store.state.settings.sfxVolume + 0.1);
+    }
+  });
+}
 
 function getPlayablePacks() {
   return levelManager.listPlayablePacks();
@@ -86,12 +163,14 @@ async function setCurrentPackId(packId, { rerenderLevels = false } = {}) {
 
 function showHome() {
   document.body.dataset.view = 'home';
+  music.play('home');
   currentLevelId = null;
   currentLevel = null;
 }
 
 function showLevelGrid() {
   document.body.dataset.view = 'levels';
+  music.fadeTo('classic');
   currentMode = 'classic';
   currentLevelId = null;
   if (backGameBtn) backGameBtn.textContent = '? Atras';
@@ -361,12 +440,14 @@ async function boot(level) {
 
 async function startDaily() {
   currentMode = 'daily';
+  music.fadeTo('daily');
   const level = levelManager.getDailyLevel(currentPackId);
   if (level) await boot(level);
 }
 
 async function startInfinite() {
   currentMode = 'infinite';
+  music.fadeTo('infinite');
   levelManager.resetInfiniteProgress();
   await levelManager.refillQueue();
   const level = await levelManager.nextInfiniteLevel(currentPackId);
@@ -427,12 +508,16 @@ async function init() {
   await store.hydrate();
   await levelManager.init();
 
+  music.init();
+  applyAudioSettings();
+  setupAudioHotkeys();
+
   populateCategorySelectors();
   currentPackId = getSelectedPackIdOrFallback(store.state.settings.selectedPackId || DEFAULT_CATEGORY_ID);
   syncCategorySelectors();
   updateLevelsTitle();
 
-  document.body.dataset.view = 'home';
+  showHome();
   document.body.dataset.hideBoardBorders = store.state.settings.hideBoardBorders !== true ? 'false' : 'true';
 
   categorySelectHomeEl?.addEventListener('change', async (event) => {
@@ -472,4 +557,3 @@ if ('serviceWorker' in navigator) {
 }
 
 init();
-
