@@ -124,6 +124,7 @@ export class BoardUI {
   }
 
   _step3HideGrid(done) {
+    if (this.hoverEl) this.hoverEl.style.display = 'none';
     if (this._gctx && this.gridOverlayEl) {
       this._gctx.clearRect(0, 0, this.gridOverlayEl.width, this.gridOverlayEl.height);
     }
@@ -237,8 +238,9 @@ export class BoardUI {
       this.wrapEl.style.pointerEvents = '';
       this.wrapEl.style.transform = '';
       this.wrapEl.style.transformOrigin = '';
-      this.wrapEl.innerHTML = '';
+      this.wrapEl.querySelectorAll('.cell').forEach((el) => el.remove());
     }
+    if (this.hoverEl) this.hoverEl.style.display = 'none';
     if (this._gctx && this.gridOverlayEl) {
       this._gctx.clearRect(0, 0, this.gridOverlayEl.width, this.gridOverlayEl.height);
     }

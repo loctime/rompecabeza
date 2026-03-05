@@ -102,19 +102,32 @@ function showBlackOverlay() {
 function hideBlackOverlay() {
   const el = document.getElementById('transition-overlay');
   if (el) {
+    const removeOverlay = () => el.classList.remove('show');
     el.style.opacity = '0';
-    el.addEventListener('transitionend', () => el.classList.remove('show'), { once: true });
+    el.addEventListener('transitionend', removeOverlay, { once: true });
+    setTimeout(removeOverlay, 500);
   }
 }
 
 async function transitionToLevel(nextLevel) {
   if (!nextLevel) return;
   showBlackOverlay();
-  await new Promise((r) => setTimeout(r, 400));
-  hud?.hideWin();
-  teardown();
-  await boot(nextLevel);
-  hideBlackOverlay();
+  try {
+    await new Promise((r) => setTimeout(r, 400));
+    hud?.hideWin();
+    teardown();
+    await boot(nextLevel);
+  } catch (error) {
+    console.error('No se pudo cargar el siguiente nivel:', error);
+    if (currentMode === 'classic') {
+      renderLevelGrid();
+      showLevelGrid();
+    } else {
+      showHome();
+    }
+  } finally {
+    hideBlackOverlay();
+  }
 }
 
 function applyBoardScale(boardW, boardH) {
@@ -162,9 +175,21 @@ async function boot(level) {
   document.body.dataset.hideBoardBorders = store.state.settings.hideBoardBorders ? 'true' : 'false';
 
   const wrapEl = document.getElementById('board-wrap');
-  const gridOverlayEl = document.getElementById('grid-overlay') || (wrapEl && wrapEl.querySelector('canvas'));
-  const hoverEl = document.getElementById('hover-overlay');
+  let gridOverlayEl = document.getElementById('grid-overlay') || (wrapEl && wrapEl.querySelector('canvas'));
+  let hoverEl = document.getElementById('hover-overlay');
   const ghostEl = document.getElementById('ghost');
+
+  if (wrapEl && !gridOverlayEl) {
+    gridOverlayEl = document.createElement('canvas');
+    gridOverlayEl.id = 'grid-overlay';
+    wrapEl.prepend(gridOverlayEl);
+  }
+  if (wrapEl && !hoverEl) {
+    hoverEl = document.createElement('div');
+    hoverEl.id = 'hover-overlay';
+    wrapEl.appendChild(hoverEl);
+  }
+
   if (!wrapEl || !gridOverlayEl) {
     console.error('BoardUI: board-wrap o grid-overlay no encontrados');
     return;
