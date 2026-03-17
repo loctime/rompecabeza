@@ -9,6 +9,8 @@ import { AssetManager } from './runtime/AssetManager.js';
 import { AppStore } from './runtime/store.js';
 import { LocalPackProvider } from './runtime/providers/LocalPackProvider.js';
 import { LevelManager } from './runtime/LevelManager.js';
+import { onAuthChange, getCurrentUser } from './firebase/authService.js';
+import { debouncedSyncToCloud } from './storage/ProgressService.js';
 
 const bus = new EventBus();
 const assetManager = new AssetManager();
@@ -35,6 +37,7 @@ let currentLevelId = null;
 let boardScaleCleanup = null;
 let lastPiecePlacedInfo = null;
 let completionAAAStarted = false;
+let currentUser = null;
 
 const INFINITE_PACK_ID = 'infinito';
 const DEFAULT_CATEGORY_ID = 'variado';
@@ -51,8 +54,74 @@ const levelsTitleEl = document.getElementById('levels-title');
 const categorySelectHomeEl = document.getElementById('category-select-home');
 const categorySelectLevelsEl = document.getElementById('category-select-levels');
 
+function setupAuthListener() {
+  // Escuchar cambios en autenticación
+  const unsubscribeAuth = onAuthChange(async (user) => {
+    currentUser = user;
+    
+    if (user) {
+      console.log('Usuario logueado:', user.email);
+      
+      // Sincronizar progreso desde la nube
+      try {
+        const { syncFromCloud } = await import('./storage/ProgressService.js');
+        await syncFromCloud(user.uid);
+        
+        // Actualizar UI si estamos en la vista de niveles
+        if (document.body.dataset.view === 'levels') {
+          renderLevelGrid();
+        }
+        
+        // Notificar al HUD del cambio de usuario
+        if (hud) {
+          hud.updateUserInfo(user);
+        }
+      } catch (error) {
+        console.error('Error sincronizando progreso:', error);
+      }
+    } else {
+      console.log('Usuario deslogueado');
+      
+      // Notificar al HUD del cambio de usuario
+      if (hud) {
+        hud.updateUserInfo(null);
+      }
+    }
+  });
+  
+  // Agregar a la lista de unsubscribers para limpieza
+  unsubscribers.push(unsubscribeAuth);
+}
+
+function syncProgressOnWin() {
+  if (currentUser && currentLevelId) {
+    // Usar debounce para evitar múltiples escrituras
+    debouncedSyncToCloud(currentUser.uid).catch(console.error);
+  }
+}
+
 function clamp01(value) {
   return Math.max(0, Math.min(1, Number(value) || 0));
+}
+
+function extractLevelIndex(levelId) {
+  // El formato puede ser "pack:levelId" o solo "levelId"
+  // Para el progreso, usamos el índice numérico del nivel
+  if (!levelId) return null;
+  
+  // Si es un número directo
+  const numIndex = parseInt(levelId);
+  if (!isNaN(numIndex)) return numIndex;
+  
+  // Si tiene formato "pack:levelId", extraer el número del levelId
+  if (levelId.includes(':')) {
+    const parts = levelId.split(':');
+    const levelPart = parts[1];
+    const extracted = parseInt(levelPart);
+    return !isNaN(extracted) ? extracted : null;
+  }
+  
+  return null;
 }
 
 async function setMuteMuted(muted) {
@@ -351,6 +420,7 @@ async function boot(level) {
     levelsBtn: document.getElementById('win-levels-btn'),
     downloadBtn: document.getElementById('download-btn'),
     winStatsEl: document.getElementById('win-stats'),
+    authContainer: document.getElementById('auth-container'),
   });
 
   drag = new DragController({ session, boardUI });
@@ -428,6 +498,22 @@ async function boot(level) {
       bestScore: Math.max(store.state.progress[progressId]?.bestScore || 0, payload.score),
       solved: payload.reason === 'win',
     });
+    
+    // Si el nivel fue completado, marcar en ProgressService y sincronizar
+    if (payload.reason === 'win') {
+      try {
+        const { markCompleted } = await import('./storage/ProgressService.js');
+        // Extraer el índice del nivel desde el ID (formato: "pack:levelId")
+        const levelIndex = extractLevelIndex(progressId);
+        if (levelIndex !== null) {
+          markCompleted(levelIndex);
+          syncProgressOnWin();
+        }
+      } catch (error) {
+        console.error('Error guardando progreso:', error);
+      }
+    }
+    
     if (document.body.dataset.view === 'levels') {
       renderLevelGrid();
     }
@@ -511,6 +597,12 @@ async function init() {
   music.init();
   applyAudioSettings();
   setupAudioHotkeys();
+
+  // Configurar listener de autenticación
+  setupAuthListener();
+  
+  // Establecer usuario actual si ya está logueado
+  currentUser = getCurrentUser();
 
   populateCategorySelectors();
   currentPackId = getSelectedPackIdOrFallback(store.state.settings.selectedPackId || DEFAULT_CATEGORY_ID);
