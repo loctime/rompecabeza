@@ -10,7 +10,7 @@ import { AppStore } from './runtime/store.js';
 import { LocalPackProvider } from './runtime/providers/LocalPackProvider.js';
 import { LevelManager } from './runtime/LevelManager.js';
 import { onAuthChange, getCurrentUser } from './firebase/authService.js';
-import { debouncedSyncToCloud } from './storage/ProgressService.js';
+import { getProgress, syncFromCloud, syncToCloud, markCompleted } from './storage/ProgressService.js';
 
 const bus = new EventBus();
 const assetManager = new AssetManager();
@@ -34,6 +34,7 @@ let pieceCanvases = [];
 let unsubscribers = [];
 let currentLevel = null;
 let currentLevelId = null;
+let currentLevelIndex = 0;
 let boardScaleCleanup = null;
 let lastPiecePlacedInfo = null;
 let completionAAAStarted = false;
@@ -55,24 +56,19 @@ const categorySelectHomeEl = document.getElementById('category-select-home');
 const categorySelectLevelsEl = document.getElementById('category-select-levels');
 
 function setupAuthListener() {
-  // Escuchar cambios en autenticación
   const unsubscribeAuth = onAuthChange(async (user) => {
     currentUser = user;
     
     if (user) {
       console.log('Usuario logueado:', user.email);
       
-      // Sincronizar progreso desde la nube
       try {
-        const { syncFromCloud } = await import('./storage/ProgressService.js');
         await syncFromCloud(user.uid);
         
-        // Actualizar UI si estamos en la vista de niveles
         if (document.body.dataset.view === 'levels') {
           renderLevelGrid();
         }
         
-        // Notificar al HUD del cambio de usuario
         if (hud) {
           hud.updateUserInfo(user);
         }
@@ -82,21 +78,18 @@ function setupAuthListener() {
     } else {
       console.log('Usuario deslogueado');
       
-      // Notificar al HUD del cambio de usuario
       if (hud) {
         hud.updateUserInfo(null);
       }
     }
   });
   
-  // Agregar a la lista de unsubscribers para limpieza
   unsubscribers.push(unsubscribeAuth);
 }
 
 function syncProgressOnWin() {
   if (currentUser && currentLevelId) {
-    // Usar debounce para evitar múltiples escrituras
-    debouncedSyncToCloud(currentUser.uid).catch(console.error);
+    syncToCloud(currentUser.uid).catch(console.error);
   }
 }
 
@@ -499,11 +492,8 @@ async function boot(level) {
       solved: payload.reason === 'win',
     });
     
-    // Si el nivel fue completado, marcar en ProgressService y sincronizar
     if (payload.reason === 'win') {
       try {
-        const { markCompleted } = await import('./storage/ProgressService.js');
-        // Extraer el índice del nivel desde el ID (formato: "pack:levelId")
         const levelIndex = extractLevelIndex(progressId);
         if (levelIndex !== null) {
           markCompleted(levelIndex);
@@ -594,14 +584,15 @@ async function init() {
   await store.hydrate();
   await levelManager.init();
 
+  // Cargar progreso inicial desde localStorage
+  const progress = getProgress();
+  currentLevelIndex = progress.lastLevel || 0;
+
   music.init();
   applyAudioSettings();
   setupAudioHotkeys();
 
-  // Configurar listener de autenticación
   setupAuthListener();
-  
-  // Establecer usuario actual si ya está logueado
   currentUser = getCurrentUser();
 
   populateCategorySelectors();

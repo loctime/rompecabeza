@@ -10,10 +10,6 @@ import { auth } from './firebaseConfig.js';
 
 const googleProvider = new GoogleAuthProvider();
 
-/**
- * Inicia sesión con Google
- * @returns {Promise<UserCredential|null>}
- */
 export async function signInWithGoogle() {
   if (!auth) {
     console.warn('Auth no disponible - Firebase no inicializado');
@@ -30,12 +26,6 @@ export async function signInWithGoogle() {
   }
 }
 
-/**
- * Inicia sesión con email y password
- * @param {string} email 
- * @param {string} password 
- * @returns {Promise<UserCredential|null>}
- */
 export async function signInWithEmail(email, password) {
   if (!auth) {
     console.warn('Auth no disponible - Firebase no inicializado');
@@ -52,12 +42,6 @@ export async function signInWithEmail(email, password) {
   }
 }
 
-/**
- * Registra un nuevo usuario con email y password
- * @param {string} email 
- * @param {string} password 
- * @returns {Promise<UserCredential|null>}
- */
 export async function signUpWithEmail(email, password) {
   if (!auth) {
     console.warn('Auth no disponible - Firebase no inicializado');
@@ -74,10 +58,6 @@ export async function signUpWithEmail(email, password) {
   }
 }
 
-/**
- * Cierra sesión del usuario actual
- * @returns {Promise<void>}
- */
 export async function signOutUser() {
   if (!auth) {
     console.warn('Auth no disponible - Firebase no inicializado');
@@ -93,11 +73,6 @@ export async function signOutUser() {
   }
 }
 
-/**
- * Escucha cambios en el estado de autenticación
- * @param {Function} callback - función que recibe (user|null)
- * @returns {Function} - función para cancelar la suscripción
- */
 export function onAuthChange(callback) {
   if (!auth) {
     console.warn('Auth no disponible - Firebase no inicializado');
@@ -108,18 +83,10 @@ export function onAuthChange(callback) {
   return _onAuthStateChanged(auth, callback);
 }
 
-/**
- * Obtiene el usuario actual
- * @returns {User|null}
- */
 export function getCurrentUser() {
   return auth?.currentUser || null;
 }
 
-/**
- * Verifica si hay un usuario logueado
- * @returns {boolean}
- */
 export function isUserLoggedIn() {
   return !!auth?.currentUser;
 }
