@@ -21,7 +21,7 @@ admin.initializeApp();
 
 exports.mintCustomToken = functions.https.onRequest(async (req, res) => {
   // CORS — solo permitir el origen del shell ControlGames
-  const allowedOrigin = 'https://controlgames.vercel.app'; // Actualizar con la URL real
+  const allowedOrigin = 'https://juegos.controldoc.app';
   res.set('Access-Control-Allow-Origin', allowedOrigin);
   res.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.set('Access-Control-Allow-Headers', 'Content-Type');

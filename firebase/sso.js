@@ -17,7 +17,7 @@
 import { auth } from './firebaseConfig.js';
 import { signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
-const CONTROLGAMES_ORIGIN = 'https://controlgames.vercel.app'; // Actualizar con la URL real del shell
+const CONTROLGAMES_ORIGIN = 'https://juegos.controldoc.app';
 const MINT_TOKEN_URL = 'https://us-central1-controlstorage-eb796.cloudfunctions.net/mintCustomToken';
 
 let ssoHandled = false;
