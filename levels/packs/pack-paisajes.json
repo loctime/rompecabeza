@@ -1,0 +1,17 @@
+{
+  "id": "paisajes",
+  "name": "Paisajes",
+  "coverImage": "/assets/levels/paisajes/paisajes-01.jpg",
+  "levels": [
+    { "id": "paisajes-01", "image": "/assets/levels/paisajes/paisajes-01.jpg", "grid": 3, "theme": "paisajes", "title": "Montaña", "difficulty": 1 },
+    { "id": "paisajes-02", "image": "/assets/levels/paisajes/paisajes-02.jpg", "grid": 4, "theme": "paisajes", "title": "Playa", "difficulty": 2 },
+    { "id": "paisajes-03", "image": "/assets/levels/paisajes/paisajes-03.jpg", "grid": 5, "theme": "paisajes", "title": "Bosque", "difficulty": 3 },
+    { "id": "paisajes-04", "image": "/assets/levels/paisajes/paisajes-04.jpg", "grid": 6, "theme": "paisajes", "title": "Desierto", "difficulty": 4 },
+    { "id": "paisajes-05", "image": "/assets/levels/paisajes/paisajes-05.jpg", "grid": 7, "theme": "paisajes", "title": "Cascada", "difficulty": 5 },
+    { "id": "paisajes-06", "image": "/assets/levels/paisajes/paisajes-06.jpg", "grid": 3, "theme": "paisajes", "title": "Lago", "difficulty": 1 },
+    { "id": "paisajes-07", "image": "/assets/levels/paisajes/paisajes-07.jpg", "grid": 4, "theme": "paisajes", "title": "Atardecer", "difficulty": 2 },
+    { "id": "paisajes-08", "image": "/assets/levels/paisajes/paisajes-08.jpg", "grid": 5, "theme": "paisajes", "title": "Cañón", "difficulty": 3 },
+    { "id": "paisajes-09", "image": "/assets/levels/paisajes/paisajes-09.jpg", "grid": 6, "theme": "paisajes", "title": "Nieve", "difficulty": 4 },
+    { "id": "paisajes-10", "image": "/assets/levels/paisajes/paisajes-10.jpg", "grid": 7, "theme": "paisajes", "title": "Valle", "difficulty": 5 }
+  ]
+}

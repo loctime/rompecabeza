@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Exportar iconos PNG</title>
+  <style>
+    body { font-family: system-ui; padding: 20px; background: #1a1a1a; color: #eee; }
+    canvas { display: none; }
+    .preview { width: 192px; height: 192px; image-rendering: pixelated; border: 1px solid #444; margin: 10px 0; }
+    a.dl { display: inline-block; margin: 8px 8px 8px 0; padding: 10px 16px; background: #c9a84c; color: #0f0e0c; text-decoration: none; border-radius: 6px; font-weight: bold; }
+    a.dl:hover { opacity: 0.9; }
+  </style>
+</head>
+<body>
+  <h1>Iconos PWA — exportar PNG</h1>
+  <p>Guarda cada enlace como <code>icon-192.png</code> e <code>icon-512.png</code> en la carpeta <code>icons/</code>.</p>
+  <div id="out"></div>
+  <script>
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192" fill="none">
+  <rect width="192" height="192" rx="24" fill="#0f0e0c"/>
+  <path d="M96 48 L136 72 L136 120 L96 144 L56 120 L56 72 Z" stroke="#c9a84c" stroke-width="4" fill="none"/>
+  <circle cx="96" cy="96" r="12" fill="#c9a84c"/>
+</svg>`;
+
+    function svgToPng(svgString, size) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        const blob = new Blob([svgString], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = size;
+          canvas.height = size;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, size, size);
+          URL.revokeObjectURL(url);
+          canvas.toBlob((blob) => {
+            resolve(URL.createObjectURL(blob));
+          }, 'image/png');
+        };
+        img.src = url;
+      });
+    }
+
+    (async () => {
+      const url192 = await svgToPng(svg, 192);
+      const url512 = await svgToPng(svg, 512);
+      const div = document.getElementById('out');
+      div.innerHTML = `
+        <p><strong>192×192</strong></p>
+        <img class="preview" src="${url192}" alt="192" width="192" height="192">
+        <p><a class="dl" href="${url192}" download="icon-192.png">Descargar icon-192.png</a></p>
+        <p><strong>512×512</strong></p>
+        <img class="preview" src="${url512}" alt="512" width="192" height="192" style="width:192px;height:192px">
+        <p><a class="dl" href="${url512}" download="icon-512.png">Descargar icon-512.png</a></p>
+      `;
+    })();
+  </script>
+</body>
+</html>

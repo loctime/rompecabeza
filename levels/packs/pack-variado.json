@@ -1,0 +1,17 @@
+{
+  "id": "variado",
+  "name": "Variado",
+  "coverImage": "/assets/levels/variado/variado-01.jpg",
+  "levels": [
+    { "id": "variado-01", "image": "/assets/levels/variado/variado-01.jpg", "grid": 3, "theme": "variado", "title": "Variado 1", "difficulty": 1 },
+    { "id": "variado-02", "image": "/assets/levels/variado/variado-02.jpg", "grid": 4, "theme": "variado", "title": "Variado 2", "difficulty": 2 },
+    { "id": "variado-03", "image": "/assets/levels/variado/variado-03.jpg", "grid": 5, "theme": "variado", "title": "Variado 3", "difficulty": 3 },
+    { "id": "variado-04", "image": "/assets/levels/variado/variado-04.jpg", "grid": 6, "theme": "variado", "title": "Variado 4", "difficulty": 4 },
+    { "id": "variado-05", "image": "/assets/levels/variado/variado-05.jpg", "grid": 7, "theme": "variado", "title": "Variado 5", "difficulty": 5 },
+    { "id": "variado-06", "image": "/assets/levels/variado/variado-06.jpg", "grid": 3, "theme": "variado", "title": "Variado 6", "difficulty": 1 },
+    { "id": "variado-07", "image": "/assets/levels/variado/variado-07.jpg", "grid": 4, "theme": "variado", "title": "Variado 7", "difficulty": 2 },
+    { "id": "variado-08", "image": "/assets/levels/variado/variado-08.jpg", "grid": 5, "theme": "variado", "title": "Variado 8", "difficulty": 3 },
+    { "id": "variado-09", "image": "/assets/levels/variado/variado-09.jpg", "grid": 6, "theme": "variado", "title": "Variado 9", "difficulty": 4 },
+    { "id": "variado-10", "image": "/assets/levels/variado/variado-10.jpg", "grid": 7, "theme": "variado", "title": "Variado 10", "difficulty": 5 }
+  ]
+}

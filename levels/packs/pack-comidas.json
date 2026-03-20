@@ -1,0 +1,17 @@
+{
+  "id": "comidas",
+  "name": "Comidas",
+  "coverImage": "/assets/levels/comidas/comidas-01.jpg",
+  "levels": [
+    { "id": "comidas-01", "image": "/assets/levels/comidas/comidas-01.jpg", "grid": 3, "theme": "comidas", "title": "Comida 1", "difficulty": 1 },
+    { "id": "comidas-02", "image": "/assets/levels/comidas/comidas-02.jpg", "grid": 4, "theme": "comidas", "title": "Comida 2", "difficulty": 2 },
+    { "id": "comidas-03", "image": "/assets/levels/comidas/comidas-03.jpg", "grid": 5, "theme": "comidas", "title": "Comida 3", "difficulty": 3 },
+    { "id": "comidas-04", "image": "/assets/levels/comidas/comidas-04.jpg", "grid": 6, "theme": "comidas", "title": "Comida 4", "difficulty": 4 },
+    { "id": "comidas-05", "image": "/assets/levels/comidas/comidas-05.jpg", "grid": 7, "theme": "comidas", "title": "Comida 5", "difficulty": 5 },
+    { "id": "comidas-06", "image": "/assets/levels/comidas/comidas-06.jpg", "grid": 3, "theme": "comidas", "title": "Comida 6", "difficulty": 1 },
+    { "id": "comidas-07", "image": "/assets/levels/comidas/comidas-07.jpg", "grid": 4, "theme": "comidas", "title": "Comida 7", "difficulty": 2 },
+    { "id": "comidas-08", "image": "/assets/levels/comidas/comidas-08.jpg", "grid": 5, "theme": "comidas", "title": "Comida 8", "difficulty": 3 },
+    { "id": "comidas-09", "image": "/assets/levels/comidas/comidas-09.jpg", "grid": 6, "theme": "comidas", "title": "Comida 9", "difficulty": 4 },
+    { "id": "comidas-10", "image": "/assets/levels/comidas/comidas-10.jpg", "grid": 7, "theme": "comidas", "title": "Comida 10", "difficulty": 5 }
+  ]
+}

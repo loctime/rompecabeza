@@ -1,0 +1,17 @@
+{
+  "id": "animales",
+  "name": "Animales",
+  "coverImage": "/assets/levels/animales/animales-01.jpg",
+  "levels": [
+    { "id": "animales-01", "image": "/assets/levels/animales/animales-01.jpg", "grid": 3, "theme": "animales", "title": "León", "difficulty": 1 },
+    { "id": "animales-02", "image": "/assets/levels/animales/animales-02.jpg", "grid": 4, "theme": "animales", "title": "Elefante", "difficulty": 2 },
+    { "id": "animales-03", "image": "/assets/levels/animales/animales-03.jpg", "grid": 5, "theme": "animales", "title": "Águila", "difficulty": 3 },
+    { "id": "animales-04", "image": "/assets/levels/animales/animales-04.jpg", "grid": 6, "theme": "animales", "title": "Lobo", "difficulty": 4 },
+    { "id": "animales-05", "image": "/assets/levels/animales/animales-05.jpg", "grid": 7, "theme": "animales", "title": "Delfín", "difficulty": 5 },
+    { "id": "animales-06", "image": "/assets/levels/animales/animales-06.jpg", "grid": 3, "theme": "animales", "title": "Tigre", "difficulty": 1 },
+    { "id": "animales-07", "image": "/assets/levels/animales/animales-07.jpg", "grid": 4, "theme": "animales", "title": "Oso", "difficulty": 2 },
+    { "id": "animales-08", "image": "/assets/levels/animales/animales-08.jpg", "grid": 5, "theme": "animales", "title": "Zorro", "difficulty": 3 },
+    { "id": "animales-09", "image": "/assets/levels/animales/animales-09.jpg", "grid": 6, "theme": "animales", "title": "Pingüino", "difficulty": 4 },
+    { "id": "animales-10", "image": "/assets/levels/animales/animales-10.jpg", "grid": 7, "theme": "animales", "title": "Ciervo", "difficulty": 5 }
+  ]
+}
