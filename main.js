@@ -11,6 +11,7 @@ import { LocalPackProvider } from './runtime/providers/LocalPackProvider.js';
 import { LevelManager } from './runtime/LevelManager.js';
 import { onAuthChange, getCurrentUser } from './firebase/authService.js';
 import { getProgress, syncFromCloud, syncToCloud, markCompleted } from './storage/ProgressService.js';
+import { initializeLevels, getLevelByIndex, getLevelCount, levelExists, CLASSIC_LEVELS } from './levels/index.js';
 
 const bus = new EventBus();
 const assetManager = new AssetManager();
@@ -35,6 +36,7 @@ let unsubscribers = [];
 let currentLevel = null;
 let currentLevelId = null;
 let currentLevelIndex = 0;
+let isUsingNewLevelSystem = false;
 let boardScaleCleanup = null;
 let lastPiecePlacedInfo = null;
 let completionAAAStarted = false;
@@ -237,6 +239,48 @@ function showLevelGrid() {
   currentLevelId = null;
   if (backGameBtn) backGameBtn.textContent = '? Atras';
   updateLevelsTitle();
+}
+
+function loadLevel(index) {
+  if (!levelExists(index)) {
+    console.error(`Nivel ${index} no existe`);
+    return null;
+  }
+  
+  const level = getLevelByIndex(index);
+  currentLevelIndex = index;
+  isUsingNewLevelSystem = true;
+  
+  // Adaptar nivel al formato que espera el engine
+  const adaptedLevel = {
+    id: level.id,
+    packId: level.packId || 'classic',
+    progressKey: `classic:${index}`,
+    board: {
+      cols: level.cols,
+      rows: level.rows,
+      boardW: level.boardW,
+      boardH: level.boardH
+    },
+    image: {
+      generate: () => level.generateImage()
+    },
+    meta: level.meta
+  };
+  
+  return adaptedLevel;
+}
+
+async function startNewLevelSystem() {
+  await initializeLevels();
+  const progress = getProgress();
+  currentLevelIndex = progress.lastLevel || 0;
+  
+  // Cargar primer nivel disponible
+  const level = loadLevel(currentLevelIndex);
+  if (level) {
+    await boot(level);
+  }
 }
 
 function showGame() {
@@ -494,10 +538,25 @@ async function boot(level) {
     
     if (payload.reason === 'win') {
       try {
-        const levelIndex = extractLevelIndex(progressId);
+        let levelIndex = null;
+        
+        // Para nuevo sistema de niveles
+        if (isUsingNewLevelSystem && currentLevelIndex !== null) {
+          levelIndex = currentLevelIndex;
+        } else {
+          // Para sistema antiguo
+          levelIndex = extractLevelIndex(progressId);
+        }
+        
         if (levelIndex !== null) {
           markCompleted(levelIndex);
           syncProgressOnWin();
+          
+          // Auto-desbloquear siguiente nivel
+          const nextLevelIndex = levelIndex + 1;
+          if (levelExists(nextLevelIndex)) {
+            console.log(`Nivel ${levelIndex} completado. Siguiente nivel (${nextLevelIndex}) desbloqueado.`);
+          }
         }
       } catch (error) {
         console.error('Error guardando progreso:', error);
@@ -532,6 +591,14 @@ async function startInfinite() {
 
 function renderLevelGrid() {
   levelGridEl.innerHTML = '';
+  
+  // Usar nuevo sistema de niveles si está disponible
+  if (isUsingNewLevelSystem || CLASSIC_LEVELS.length > 0) {
+    renderNewLevelGrid();
+    return;
+  }
+  
+  // Sistema antiguo como fallback
   const count = levelManager.getPackLevelCount(currentPackId);
 
   for (let i = 0; i < count; i++) {
@@ -558,6 +625,82 @@ function renderLevelGrid() {
       <span class="level-diff">${stars}</span>
     `;
     card.addEventListener('click', () => boot(level));
+    levelGridEl.appendChild(card);
+  }
+}
+
+function renderNewLevelGrid() {
+  const progress = getProgress();
+  const completedLevels = progress.completedLevels || [];
+  
+  for (let i = 0; i < CLASSIC_LEVELS.length; i++) {
+    const level = CLASSIC_LEVELS[i];
+    if (!level) continue;
+
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'level-card';
+    card.dataset.levelIndex = i;
+
+    const num = String(i + 1).padStart(2, '0');
+    card.dataset.levelNum = num;
+
+    // Sistema de desbloqueo progresivo
+    const isUnlocked = i === 0 || completedLevels.includes(i - 1);
+    const isCompleted = completedLevels.includes(i);
+
+    // Clases CSS para estados
+    card.classList.add('revealed');
+    if (!isUnlocked) {
+      card.classList.add('locked');
+    }
+    if (isCompleted) {
+      card.classList.add('completed');
+    }
+
+    const stars = '?'.repeat(level.difficulty ?? 1);
+    
+    if (!isUnlocked) {
+      // Nivel bloqueado: no mostrar imagen, mostrar candado
+      card.innerHTML = `
+        <div class="level-lock-overlay">
+          <span class="lock-icon">🔒</span>
+          <span class="lock-text">Bloqueado</span>
+        </div>
+        <span class="level-num">${num}</span>
+        <span class="level-title">${level.title || level.name || level.id}</span>
+        <span class="level-diff">${stars}</span>
+      `;
+      
+      // No permitir click en niveles bloqueados
+      card.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Mostrar mensaje de desbloqueo
+        if (i > 0) {
+          const prevLevelName = CLASSIC_LEVELS[i - 1]?.title || CLASSIC_LEVELS[i - 1]?.name || `Nivel ${i}`;
+          alert(`Completa "${prevLevelName}" para desbloquear este nivel`);
+        }
+      });
+    } else {
+      // Nivel desbloqueado: mostrar imagen normal
+      const imgSrc = level._imageUrl || level.image || './assets/levels/nivel-01.jpg';
+      card.innerHTML = `
+        ${isCompleted ? '<div class="completed-badge">✅</div>' : ''}
+        <img src="${imgSrc}" alt="" loading="lazy" />
+        <span class="level-num">${num}</span>
+        <span class="level-title">${level.title || level.name || level.id}</span>
+        <span class="level-diff">${stars}</span>
+      `;
+      
+      card.addEventListener('click', () => {
+        const adaptedLevel = loadLevel(i);
+        if (adaptedLevel) {
+          boot(adaptedLevel);
+        }
+      });
+    }
+    
     levelGridEl.appendChild(card);
   }
 }

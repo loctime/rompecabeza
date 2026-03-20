@@ -455,6 +455,75 @@ body[data-view="game"] .app-header {
   padding-bottom: 6px;
 }
 
+/* ── Estados de niveles (sistema de desbloqueo) ── */
+.level-card.locked {
+  border-color: var(--text-dim);
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.level-card.locked:hover {
+  border-color: var(--text-dim);
+  box-shadow: none;
+  transform: none;
+}
+
+.level-card.locked img {
+  display: none;
+}
+
+.level-lock-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(145deg, var(--bg-card) 0%, var(--bg) 60%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+  z-index: 2;
+}
+
+.lock-icon {
+  font-size: 1.5rem;
+  margin-bottom: 4px;
+  opacity: 0.8;
+}
+
+.lock-text {
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.level-card.completed {
+  border-color: var(--gold);
+  box-shadow: 0 0 12px var(--gold-soft);
+}
+
+.completed-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: var(--gold);
+  color: var(--bg);
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  z-index: 3;
+  font-weight: bold;
+}
+
+.level-card.completed:hover {
+  border-color: var(--gold);
+  box-shadow: 0 0 20px var(--gold-soft);
+}
+
 /* ── Área de juego ── */
 body[data-view="game"] {
   padding: max(4px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)) 12px;
