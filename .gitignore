@@ -9,9 +9,8 @@ Thumbs.db
 *.swo
 *~
 
-# Dependencies
-node_modules/
-functions/node_modules/
+# Dependencies (cualquier carpeta node_modules, p. ej. raíz o functions/)
+**/node_modules/
 
 # Logs
 *.log
@@ -24,4 +23,3 @@ npm-debug.log*
 # Env variants
 .env.*
 !.env.example
-
